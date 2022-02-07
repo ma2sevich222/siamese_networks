@@ -9,7 +9,7 @@ pd.set_option("expand_frame_repr", False)
 pd.set_option("precision", 2)
 
 
-source_root = 'source_root'
+source_root = 'outputs'
 destination_root = 'outputs'
 file_name = 'pattern_model_test.csv'
 
