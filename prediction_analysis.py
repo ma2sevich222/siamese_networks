@@ -75,7 +75,9 @@ def extend_plotting(data, tresh_list, pattern_list):
     fig.update_layout(title='BUY signals predictions', xaxis_title='DATE', yaxis_title='CLOSE', legend_title='Legend')
     fig.show()
 
-list_of_tr = [0.03, 0.003, 0.005, 0.04, 0.005]
-list_of_patt = [48, 57, 4, 34, 77]
+# list_of_tr = [0.03, 0.003, 0.005, 0.04, 0.005]
+# list_of_patt = [48, 57, 4, 34, 77]
+list_of_tr = [0.1]
+list_of_patt = [75]
 
 extend_plotting(df, list_of_tr, list_of_patt)
