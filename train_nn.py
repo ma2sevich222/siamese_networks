@@ -33,7 +33,7 @@ df['Datetime'] = df['Date']
 # df.set_index('Datetime', inplace=True)
 # df.sort_index(ascending=True, inplace=False)
 df = df.rename(columns={"<Volume>": "Volume"})
-del df['Time'], df['Date']
+del df['Time']
 
 """Добавление фич"""
 df['SMA'] =df.iloc[:,3].rolling(window=10).mean()
@@ -124,4 +124,3 @@ neg_patern, pos_patern = get_patterns(
 )
 
 print(f'neg_patern.shape: {neg_patern.shape}\t|\tpos_patern.shape: {pos_patern.shape}')
-exit()
