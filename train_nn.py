@@ -30,8 +30,8 @@ df['Date'] = new_df[2] + '-' + new_df[1] + '-' + new_df[0] + " " + df['Time']
 df.Date = pd.to_datetime(df.Date)
 df.dropna(axis=0, inplace=True)  # Удаляем наниты
 df['Datetime'] = df['Date']
-df.set_index('Datetime', inplace=True)
-df.sort_index(ascending=True, inplace=False)
+# df.set_index('Datetime', inplace=True)
+# df.sort_index(ascending=True, inplace=False)
 df = df.rename(columns={"<Volume>": "Volume"})
 del df['Time'], df['Date']
 
