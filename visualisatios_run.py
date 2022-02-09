@@ -1,13 +1,18 @@
 import plotly.io as pio
 
 pio.renderers.default = "browser"
-from visualisation_functios import *
-from data_transforms import *
-from variables import *
+from utilits.visualisation_functios import *
+from utilits.data_transforms import *
+from constants import *
 
+
+
+data_file_name = 'VZ_15_Minutes_(with_indicators)_2018_18012022.txt'
+patterns_file_name = 'buy_patterns.txt'
+results_file_name = 'pattern_model_test.csv'
 
 # Загрузка  и отчиска данных на которых тестировалась модель
-df = pd.read_csv(folder + data_file_name, delimiter=",")
+df = pd.read_csv(f'{SOURCE_ROOT}/{data_file_name}', delimiter=",")
 raw_eval_data = df[
     ["<Date>", " <Time>", " <Open>", " <High>", " <Low>", " <Close>", " <Volume>"]
 ].copy()
@@ -28,9 +33,9 @@ eval_df.drop(["Date"], axis=1, inplace=True)
 eval_df = eval_df.reset_index(drop=True)
 
 # загружаем массив размечанных паттернов и результаты тестирования модели
-loader = np.loadtxt(folder + patterns_file_name)
+loader = np.loadtxt(f'{DESTINATION_ROOT}/{patterns_file_name}')
 patterns = loader.reshape(data_shape)  # возвращаем исходный размер
-results = pd.read_csv(folder + results_file_name, index_col=[0])
+results = pd.read_csv(f'{DESTINATION_ROOT}/{results_file_name}', index_col=[0])
 results = results.rename(columns={"pattern No.": "pattern"})
 neighbor_patterns = calculate_cos_dist(patterns, pattern)  # ближайшие соседи паттерна
 
