@@ -1,12 +1,8 @@
+from tensorflow.keras.layers import Conv2D, AveragePooling2D, Input, Flatten, Dense
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Conv2D, Activation, AveragePooling2D,Input, Flatten, Dense, Dropout, Lambda
-
-
-
 
 
 def create_base_net(input_shape):
-
     input = Input(shape=input_shape)
     x = Conv2D(16, (2, 2), activation="tanh", padding="same")(input)
     x = AveragePooling2D(pool_size=(2, 2), padding="same")(x)
