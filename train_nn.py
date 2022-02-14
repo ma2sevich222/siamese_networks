@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,11 +14,41 @@ from tensorflow.keras.layers import Input, Flatten, Dense, Dropout, Lambda
 from tensorflow.keras.layers import Conv2D, Activation, AveragePooling2D
 from keras import backend as K
 from tqdm import tqdm
+import GPUtil as GPU
+import psutil
+
+# сделаем так, чтобы tf не резервировал под себя сразу всю память
+# https://stackoverflow.com/questions/34199233/how-to-prevent-tensorflow-from-allocating-the-totality-of-a-gpu-memory
+gpus = tf.config.experimental.list_physical_devices('GPU')
+for gpu in gpus:
+  tf.config.experimental.set_memory_growth(gpu, True)
+
+# Assume that you have 12GB of GPU memory and want to allocate ~4GB:
+# gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
+# sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+def gpu_usage():
+    GPUs = GPU.getGPUs()
+    # XXX: only one GPU on Colab and isn’t guaranteed
+    if len(GPUs) == 0:
+        return False
+    gpu = GPUs[0]
+    process = psutil.Process(os.getpid())
+    print("GPU RAM Free: {0:.0f}MB | Used: {1:.0f}MB | Util: {2:3.0f}% | Total: {3:.0f}MB".format(gpu.memoryFree, gpu.memoryUsed, gpu.memoryUtil*100, gpu.memoryTotal))
+
+seed = 347
+# https://coderoad.ru/51249811/Воспроизводимые-результаты-в-Tensorflow-с-tf-set_random_seed
+os.environ['PYTHONHASHSEED'] = str(seed)
+random.seed(seed)
+np.random.seed(seed)
+tf.random.set_seed(seed)
 
 pd.pandas.set_option("display.max_columns", None)
 pd.set_option("expand_frame_repr", False)
 pd.set_option("precision", 2)
 
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""" Main Block """""""""""""""""""""""""""""""""
 source_root = "source_root"
 destination_root = "outputs"
 filename = "VZ_15_Minutes_(with_indicators)_2018_18012022.txt"
@@ -74,11 +105,12 @@ Eval_df = Eval_df.reset_index(drop=True)
 """Основыен параметры"""
 num_classes = 2
 extr_window = 40
-n_size = 20  # размер мемори
+n_size = 20  # размер паттерна ??
 """Параметры обучения"""
 batch_size = 10
 epochs = 200
 treshhold = 0.05  # граница уверености
+latent_dim = 100
 
 
 def get_locals(data_df, n):  # данные подаются в формате df
@@ -111,9 +143,7 @@ def get_locals(data_df, n):  # данные подаются в формате d
     return Min_, Max_
 
 
-def get_patterns(
-        data, min_indexes, max_indexes, n_backwatch
-):  # подаем дата как нумпи, индексы как лист
+def get_patterns(data, min_indexes, max_indexes, n_backwatch):  # подаем дата как нумпи, индексы как лист
 
     negative_patterns = []
     positive_patterns = []
@@ -192,7 +222,7 @@ def create_base_net(input_shape):
     x = Conv2D(32, (2, 2), activation="tanh", padding="same")(x)
     # x = AveragePooling2D(pool_size = (2,2))(x)
     x = Flatten()(x)
-    x = Dense(100, activation="tanh")(x)
+    x = Dense(latent_dim, activation="tanh")(x)
     model = Model(input, x)
     # model.summary()
     return model
@@ -214,6 +244,8 @@ def accuracy(y_true, y_pred):
 def get_train_samples(negative, positive):
     train_samples = []
     train_labels = []
+
+    gpu_usage()
 
     for neg in negative:
         train_samples.append(neg)
@@ -267,8 +299,7 @@ eval_array = Eval_df.to_numpy()
 eval_samples = [eval_array[i - n_size:i] for i in range(len(eval_array)) if i - n_size >= 0]
 eval_normlzd = [normalize(i, axis=0, norm='max') for i in eval_samples]
 eval_normlzd = np.array(eval_normlzd).reshape(-1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1)
-print(f'268: eval_normlzd.shape\n'
-      f'Число пар для теста: {eval_normlzd.shape}')
+print(f'\n268: eval_normlzd.shape\t|\tЧисло пар для теста: {eval_normlzd.shape}')
 
 negative_anchor = []
 positve_anchor = []
@@ -323,4 +354,4 @@ Predictions = pd.DataFrame(
     list(zip(date, open, high, low, close, volume, signal, Min_prediction_pattern_name, distance)),
     columns=['date', 'open', 'high', 'low', 'close', 'volume', 'signal', 'pattern No.', 'distance'])
 
-Predictions.to_csv(f'{destination_root}/{out_filename}')
+Predictions.to_csv(f'{destination_root}/{out_filename}_latentdim{latent_dim}')

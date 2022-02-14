@@ -11,9 +11,9 @@ pd.set_option("precision", 2)
 
 source_root = 'outputs'
 destination_root = 'outputs'
-file_name = 'pattern_model_test.csv'
+file_name = 'test_results_latentdim10.csv'
 
-treshhold_distance = 0.001
+treshhold_distance = 0.01
 pattern_num = 4
 
 df = pd.read_csv(f'{source_root}/{file_name}')
@@ -75,9 +75,7 @@ def extend_plotting(data, tresh_list, pattern_list):
     fig.update_layout(title='BUY signals predictions', xaxis_title='DATE', yaxis_title='CLOSE', legend_title='Legend')
     fig.show()
 
-# list_of_tr = [0.03, 0.003, 0.005, 0.04, 0.005]
-# list_of_patt = [48, 57, 4, 34, 77]
-list_of_tr = [0.1]
-list_of_patt = [75]
+list_of_tr = [0.001, 0.01]
+list_of_patt = [4, 166]
 
 extend_plotting(df, list_of_tr, list_of_patt)
