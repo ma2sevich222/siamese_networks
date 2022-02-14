@@ -3,8 +3,6 @@ import random
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import argrelextrema
-from tensorflow.keras.layers import Conv2D, AveragePooling2D, Input, Flatten, Dense
-from tensorflow.keras.models import Model
 
 
 #  функция создания пар
