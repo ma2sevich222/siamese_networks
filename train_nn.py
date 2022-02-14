@@ -49,10 +49,9 @@ pd.set_option("precision", 2)
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 """"""""""""""""""""""""""""" Main Block """""""""""""""""""""""""""""""""
-source_root = "source_root"
+source_root = "source_root/15min"
 destination_root = "outputs"
-filename = "VZ_15_Minutes_(with_indicators)_2018_18012022.txt"
-out_filename = 'test_results.csv'
+filename = "VZ_15_Minutes_(with_indicators).txt"
 indices = [
     i for i, x in enumerate(filename) if x == "_"
 ]  # находим индексы вхождения '_'
@@ -231,6 +230,7 @@ def create_base_net(input_shape):
 def compute_accuracy(y_true, y_pred):
     """Compute classification accuracy with a fixed threshold on distances.
     """
+    gpu_usage()
     pred = y_pred.ravel() < 0.5
     return np.mean(pred == y_true)
 
@@ -354,4 +354,4 @@ Predictions = pd.DataFrame(
     list(zip(date, open, high, low, close, volume, signal, Min_prediction_pattern_name, distance)),
     columns=['date', 'open', 'high', 'low', 'close', 'volume', 'signal', 'pattern No.', 'distance'])
 
-Predictions.to_csv(f'{destination_root}/{out_filename}_latentdim{latent_dim}')
+Predictions.to_csv(f'{destination_root}/test_results_latentdim{latent_dim}.csv')
