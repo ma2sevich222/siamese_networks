@@ -104,11 +104,11 @@ Eval_df = Eval_df.reset_index(drop=True)
 """Основыен параметры"""
 num_classes = 2
 extr_window = 40
-n_size = 20  # размер паттерна ??
+n_size = 7  # размер паттерна ??
 """Параметры обучения"""
-batch_size = 10
-epochs = 200
-treshhold = 0.05  # граница уверености
+batch_size = 100
+epochs = 700
+treshhold = 0.01  # граница уверености
 latent_dim = 100
 
 
@@ -354,4 +354,4 @@ Predictions = pd.DataFrame(
     list(zip(date, open, high, low, close, volume, signal, Min_prediction_pattern_name, distance)),
     columns=['date', 'open', 'high', 'low', 'close', 'volume', 'signal', 'pattern No.', 'distance'])
 
-Predictions.to_csv(f'{destination_root}/test_results_latentdim{latent_dim}.csv')
+Predictions.to_csv(f'{destination_root}/test_results_{n_size}bar_latentdim{latent_dim}.csv')
