@@ -12,6 +12,7 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Flatten, Dense, Dropout, Lambda
 from tensorflow.keras.layers import Conv2D, Activation, AveragePooling2D
 from keras import backend as K
+from tqdm import tqdm
 
 pd.pandas.set_option("display.max_columns", None)
 pd.set_option("expand_frame_repr", False)
@@ -35,7 +36,7 @@ del df["ZeroLine"]
 columns = df.columns.tolist()
 
 """Формат даты в Datetime"""
-print(df)
+print(f'Исходный датасет:\n{df}\n')
 new_df = df["Date"].str.split(".", expand=True)
 df["Date"] = new_df[2] + "-" + new_df[1] + "-" + new_df[0] + " " + df["Time"]
 df.Date = pd.to_datetime(df.Date)
@@ -50,7 +51,6 @@ del df["Time"], df["Date"]
 df["SMA"] = df.iloc[:, 3].rolling(window=10).mean()
 df["CMA30"] = df["Close"].expanding().mean()
 df["SMA"] = df["SMA"].fillna(0)
-print(df)
 
 """Для обучения модели"""
 START_TRAIN = "2018-01-01 09:00:00"
@@ -61,8 +61,10 @@ END_TEST = "2021-12-31 23:00:00"
 """Отберем данные по максе"""
 mask_train = (df.index >= START_TRAIN) & (df.index <= END_TRAIN)
 Train_df = df.loc[mask_train]
+print(f'Источник патернов:\n{Train_df}\n')
 mask_test = (df.index >= START_TEST) & (df.index <= END_TEST)
 Eval_df = df.loc[mask_test]
+print(f'Датасет test с фичами:\n{Eval_df}\n')
 """Сохраняем даты, удаляем из основынх датафрэймов"""
 Train_dates = Train_df.index.to_list()
 Eval_dates = Eval_df.index.to_list()
@@ -73,10 +75,9 @@ Eval_df = Eval_df.reset_index(drop=True)
 num_classes = 2
 extr_window = 40
 n_size = 20  # размер мемори
-
 """Параметры обучения"""
 batch_size = 10
-epochs = 500
+epochs = 200
 treshhold = 0.05  # граница уверености
 
 
@@ -138,7 +139,8 @@ neg_patern, pos_patern = get_patterns(
     n_size,
 )
 
-print(f"neg_patern.shape: {neg_patern.shape}\t|\tpos_patern.shape: {pos_patern.shape}")
+print(f"Число патернов, найденных алгоритмом для разметки:\n"
+      f"neg_patern.shape: {neg_patern.shape}\t|\tpos_patern.shape: {pos_patern.shape}")
 
 """Функции сети"""
 
@@ -190,9 +192,9 @@ def create_base_net(input_shape):
     x = Conv2D(32, (2, 2), activation="tanh", padding="same")(x)
     # x = AveragePooling2D(pool_size = (2,2))(x)
     x = Flatten()(x)
-    x = Dense(10, activation="tanh")(x)
+    x = Dense(100, activation="tanh")(x)
     model = Model(input, x)
-    model.summary()
+    # model.summary()
     return model
 
 
@@ -254,7 +256,6 @@ distance = Lambda(euclid_dis, output_shape=eucl_dist_output_shape)(
 )
 
 model = Model([input_a, input_b], distance)
-
 model.compile(loss=contrastive_loss, optimizer="adam", metrics=[accuracy])
 model.fit([tr_pairs[:, 0], tr_pairs[:, 1]], tr_y, batch_size=batch_size, epochs=epochs)
 
@@ -266,7 +267,8 @@ eval_array = Eval_df.to_numpy()
 eval_samples = [eval_array[i - n_size:i] for i in range(len(eval_array)) if i - n_size >= 0]
 eval_normlzd = [normalize(i, axis=0, norm='max') for i in eval_samples]
 eval_normlzd = np.array(eval_normlzd).reshape(-1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1)
-print(eval_normlzd.shape)
+print(f'268: eval_normlzd.shape\n'
+      f'Число пар для теста: {eval_normlzd.shape}')
 
 negative_anchor = []
 positve_anchor = []
@@ -292,10 +294,9 @@ signal = []  # лэйбл
 k = 0
 treshhold = treshhold
 
-for indexI, eval in enumerate(eval_normlzd):
+for indexI, eval in enumerate(tqdm(eval_normlzd)):
 
     neg_predictions = []
-
     for neg in negative_anchor:
         neg_pred = model.predict([neg.reshape(1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1),
                                   eval.reshape(1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1)])
