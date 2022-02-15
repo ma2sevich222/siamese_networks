@@ -93,6 +93,7 @@ treshhold = 0.05 #  граница уверености
 
 
 
+
 Min_train_locals, Max_train__locals = get_locals(Train_df, extr_window)
 
 buy_patern, sell_patern = get_patterns(
