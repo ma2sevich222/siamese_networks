@@ -11,19 +11,21 @@ from tensorflow.keras.models import Model
 from functions_for_train_nn import get_locals, get_patterns, create_pairs, get_train_samples
 from losses import euclid_dis, eucl_dist_output_shape, contrastive_loss, accuracy
 from models import create_base_net
+import json
 
 pd.pandas.set_option("display.max_columns", None)
 pd.set_option("expand_frame_repr", False)
 pd.set_option("precision", 2)
-
+num_classes = 2
 
 source_root = "source_root"
 destination_root = "outputs"
-model_name='Best_model'
+model_name = 'Best_model'
 filename = "VZ_15_Minutes_(with_indicators)_2018_18012022.txt"
-out_filename='test_results.csv'
-eval_dates_save='Eval_dates.csv'
-eval_data_df='Eval_df.csv'
+out_filename ='test_results.csv'
+eval_dates_save = 'Eval_dates.txt'
+eval_data_df = 'Eval_df.csv'
+buy_patterns_save='buy_patterns.txt'
 
 indices = [
     i for i, x in enumerate(filename) if x == "_"
@@ -69,14 +71,14 @@ mask_test = (df.index >= START_TEST) & (df.index <= END_TEST)
 Eval_df = df.loc[mask_test]
 """Сохраняем даты, удаляем из основынх датафрэймов"""
 Train_dates = Train_df.index.to_list()
-Eval_dates = Eval_df.index.to_list()
-Train_df=Train_df.reset_index(drop=True)
-Eval_df=Eval_df.reset_index(drop=True)
-
-
-Eval_dates.to_csv(f'{destination_root}/{eval_dates_save}')
+Eval_dates = Eval_df.index.astype(str)
+Train_df = Train_df.reset_index(drop=True)
+Eval_df = Eval_df.reset_index(drop=True)
+Eval_dates_str=[str(i) for i in Eval_dates]
 Eval_df.to_csv(f'{destination_root}/{eval_data_df}')
 
+with open(f'{destination_root}/{eval_dates_save}', 'w') as f:
+    f.write(json.dumps(Eval_dates_str))
 
 
 """Основыен параметры"""
@@ -85,9 +87,9 @@ extr_window = 40
 n_size = 20  # размер мемори
 
 """Параметры обучения"""
-batch_size=10
-epochs=500
-treshhold=0.05 #  граница уверености
+batch_size = 10
+epochs = 10
+treshhold = 0.05 #  граница уверености
 
 
 
@@ -105,6 +107,9 @@ buy_patern, sell_patern = get_patterns(
 
 print(f"buy_patern.shape: {buy_patern.shape}\t|\sell_patern.shape: {sell_patern.shape}")
 
+buy_reshaped = buy_patern.reshape(buy_patern.shape[0], -1)
+np.savetxt(f"{destination_root}/{buy_patterns_save}", buy_reshaped)
+
 
 
 
@@ -120,7 +125,7 @@ Ytrain = Ytrain.reshape(-1, 1)
 
 """Получаем пары"""
 digit_indices = [np.where(Ytrain == i)[0] for i in range(num_classes)]
-tr_pairs, tr_y = create_pairs(X_norm, digit_indices)
+tr_pairs, tr_y = create_pairs(X_norm, digit_indices, num_classes)
 
 """Создаем сеть"""
 input_shape = (buy_patern[0].shape[0], buy_patern[0][0].shape[0], 1)
