@@ -28,7 +28,7 @@ source_root = "source_root/15min"
 destination_root = "outputs"
 filename = "VZ_15_Minutes_(with_indicators).txt"
 out_filename ='test_results.csv'
-
+buy_patterns_save='buy_patterns.txt'
 
 
 indices = [
@@ -101,7 +101,8 @@ buy_patern, sell_patern = get_patterns(
     n_size,
 )
 
-
+buy_reshaped = buy_patern.reshape(buy_patern.shape[0], -1)
+np.savetxt(f"{destination_root}/{buy_patterns_save}", buy_reshaped)
 
 
 print(f"buy_patern.shape: {buy_patern.shape}\t|\sell_patern.shape: {sell_patern.shape}")
