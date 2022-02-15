@@ -3,6 +3,7 @@ import plotly.express as px
 import numpy as np
 import plotly.graph_objects as go
 from matplotlib import pyplot as plt
+import seaborn as sns
 
 pd.pandas.set_option('display.max_columns', None)
 pd.set_option("expand_frame_repr", False)
@@ -11,7 +12,7 @@ pd.set_option("precision", 2)
 
 source_root = 'outputs'
 destination_root = 'outputs'
-file_name = 'test_results_latentdim10.csv'
+file_name = 'test_results_15min_7bar_latentdim100.csv'
 
 treshhold_distance = 0.01
 pattern_num = 4
@@ -30,6 +31,8 @@ ax.set_xlabel('Номер паттерна')
 ax.set_ylabel('Число распознаваний')
 plt.title(f'Число определенных паттернов по видам\n при treshhold_distance = {treshhold_distance}')
 plt.show()
+
+
 
 def ploter(data, treshhold, pattern):
 
@@ -63,8 +66,16 @@ def ploter(data, treshhold, pattern):
 def extend_plotting(data, tresh_list, pattern_list):
     filtered_df = []
     for i, j in zip(tresh_list, pattern_list):
-        sample_df = data[(data.distance <= i) & (data.signal == 1) & (data.pattern == j)]
+        sample_df = data[(data.distance <= i) & (data.pattern == j)]
         filtered_df.append(sample_df)
+
+    df_pattern = df[(df.pattern == j)]
+    sns.distplot(df_pattern["distance"])
+    plt.title(f'pattern = {j}:\n'
+              f'min distance = {df_pattern["distance"].min().round(4)},   '
+              f'max distance = {df_pattern["distance"].max().round(4)}')
+    plt.show()
+    print(filtered_df)
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=data['date'], y=data['close'], mode='lines', name='CLOSE'))
@@ -75,7 +86,7 @@ def extend_plotting(data, tresh_list, pattern_list):
     fig.update_layout(title='BUY signals predictions', xaxis_title='DATE', yaxis_title='CLOSE', legend_title='Legend')
     fig.show()
 
-list_of_tr = [0.001, 0.05]
-list_of_patt = [4, 43]
+list_of_tr = [0.005]
+list_of_patt = [15]
 
 extend_plotting(df, list_of_tr, list_of_patt)
