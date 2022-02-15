@@ -1,19 +1,16 @@
 from __future__ import absolute_import
 from __future__ import print_function
-import pandas as pd
+
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from sklearn.preprocessing import normalize
-from keras.models import save_model
-import random
-import tensorflow as tf
-from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.layers import Input, Lambda
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Flatten, Dense, Dropout, Lambda
-from functions_for_train_nn import get_locals, get_patterns,create_pairs,get_train_samples
-from models import create_base_net
-from losses import euclid_dis,eucl_dist_output_shape,contrastive_loss,compute_accuracy,accuracy
 
+from functions_for_train_nn import get_locals, get_patterns, create_pairs, get_train_samples
+from losses import euclid_dis, eucl_dist_output_shape, contrastive_loss, accuracy
+from models import create_base_net
 
 pd.pandas.set_option("display.max_columns", None)
 pd.set_option("expand_frame_repr", False)
