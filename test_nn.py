@@ -1,22 +1,31 @@
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import normalize
-from tensorflow import keras
+from keras.models import load_model
+import json
+
 
 source_root = 'source_root'
 destination_root = 'outputs'
 filename = 'Eval_df.csv'
-buy_patterns = 'buy_patterns.csv'
-eval_dates = 'Eval_dates.csv'
+buy_patterns = 'buy_patterns.txt'
 out_filename = 'test_results.csv'
-model_name = 'Best_model.h5'
+model_name = 'Best_model'
+eval_dates = 'Eval_dates.txt'
 
 n_size = 20
 treshhold = 0.05
 
-model = keras.models.load_model(f"{source_root}/{model_name}")
-Eval_df = pd.read_csv(f"{source_root}/{filename}")
-Eval_dates = pd.read_csv(f"{source_root}/{eval_dates}")
+model = load_model(f"{destination_root}/{model_name}", compile=False)
+Eval_df = pd.read_csv(f"{destination_root}/{filename}")
+Eval_df = Eval_df.drop("Unnamed: 0", axis=1)
+
+with open(f'{destination_root}/{eval_dates}', 'r') as f:
+    Eval_dates = json.loads(f.read())
+
+
+
+
 # загружаем массив размечанных паттернов и результаты тестирования модели
 buy_loader = np.loadtxt(f'{destination_root}/{buy_patterns}')
 
@@ -28,7 +37,8 @@ print(eval_normlzd.shape)
 
 buy_patterns = buy_loader.reshape(-1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1)
 
-Eval_str_dates = [str(i) for i in Eval_dates]
+
+
 Min_prediction_pattern_name = []
 date = []
 open = []
@@ -41,7 +51,8 @@ signal = []  # лэйбл
 k = 0
 treshhold = treshhold
 
-for indexI, eval in enumerate(eval_normlzd):
+for indexI, eval in enumerate(eval_normlzd[:5]):
+
 
     buy_predictions = []
 
@@ -50,7 +61,7 @@ for indexI, eval in enumerate(eval_normlzd):
                                   eval.reshape(1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1)])
         buy_predictions.append(buy_pred)
 
-    date.append(Eval_str_dates[indexI + (n_size - 1)])
+    date.append(Eval_dates[indexI + (n_size - 1)])
     open.append(float(eval_array[indexI + (n_size - 1), [0]]))
     high.append(float(eval_array[indexI + (n_size - 1), [1]]))
     low.append(float(eval_array[indexI + (n_size - 1), [2]]))
