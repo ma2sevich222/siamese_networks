@@ -24,9 +24,9 @@ pd.set_option("expand_frame_repr", False)
 pd.set_option("precision", 2)
 num_classes = 2
 
-source_root = "source_root"
+source_root = "source_root/15min"
 destination_root = "outputs"
-filename = "VZ_15_Minutes_(with_indicators)_2018_18012022.txt"
+filename = "VZ_15_Minutes_(with_indicators).txt"
 out_filename ='test_results.csv'
 
 
