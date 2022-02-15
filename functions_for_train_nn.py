@@ -6,7 +6,7 @@ from scipy.signal import argrelextrema
 
 
 #  функция создания пар
-def create_pairs(x, digit_indices):
+def create_pairs(x, digit_indices, num_classes):
     pairs = []
     labels = []
     n = min([len(digit_indices[d]) for d in range(num_classes)]) - 1
