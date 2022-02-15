@@ -19,11 +19,11 @@ pd.set_option("precision", 2)
 
 source_root = "source_root"
 destination_root = "outputs"
-model_name='Best_model'
-filename = "VZ_15_Minutes_(with_indicators)_2018_18012022.txt"
-out_filename='test_results.csv'
-eval_dates_save='Eval_dates.csv'
-eval_data_df='Eval_df.csv'
+model_name = 'Best_model'
+filename = "AAPL_15_Minutes_(with_indicators).txt"
+out_filename = 'test_results.csv'
+eval_dates_save = 'Eval_dates.csv'
+eval_data_df = 'Eval_df.csv'
 
 indices = [
     i for i, x in enumerate(filename) if x == "_"
@@ -31,7 +31,7 @@ indices = [
 ticker = filename[: indices[0]]
 
 """Загрузка и подготовка данных"""
-df = pd.read_csv(f"{source_root}/{filename}")
+df = pd.read_csv(f"{source_root}/15min/{filename}")
 df.rename(columns=lambda x: x.replace(">", ""), inplace=True)
 df.rename(columns=lambda x: x.replace("<", ""), inplace=True)
 df.rename(columns=lambda x: x.replace(" ", ""), inplace=True)
@@ -74,7 +74,7 @@ Train_df=Train_df.reset_index(drop=True)
 Eval_df=Eval_df.reset_index(drop=True)
 
 
-Eval_dates.to_csv(f'{destination_root}/{eval_dates_save}')
+# Eval_dates.to_csv(f'{destination_root}/{eval_dates_save}')
 Eval_df.to_csv(f'{destination_root}/{eval_data_df}')
 
 
