@@ -6,7 +6,7 @@ Created on Wed Feb  9 16:36:25 2022
 @author: ma2sevich
 """
 
-SOURCE_ROOT = 'source_root'
+SOURCE_ROOT = 'source_root/15min'
 DESTINATION_ROOT = 'outputs'
 
 

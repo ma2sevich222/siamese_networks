@@ -6,7 +6,7 @@ from utilits.data_transforms import *
 from constants import *
 
 
-data_file_name = 'VZ_15_Minutes_(with_indicators)_2018_18012022.txt'
+data_file_name = 'VZ_15_Minutes_(with_indicators).txt'
 patterns_file_name = 'buy_patterns.txt'
 results_file_name = 'test_results_latentdim10.csv'
 
