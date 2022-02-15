@@ -51,7 +51,7 @@ signal = []  # лэйбл
 k = 0
 treshhold = treshhold
 
-for indexI, eval in enumerate(eval_normlzd[:5]):
+for indexI, eval in enumerate(eval_normlzd):
 
 
     buy_predictions = []
