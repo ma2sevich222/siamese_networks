@@ -10,8 +10,8 @@ from tensorflow.keras.layers import Input, Lambda
 from tensorflow.keras.models import Model
 
 from utilits.functions_for_train_nn import get_locals, get_patterns, create_pairs, get_train_samples
-from losses import euclid_dis, eucl_dist_output_shape, contrastive_loss, accuracy
-from models import create_base_net
+from utilits.losses import euclid_dis, eucl_dist_output_shape, contrastive_loss, accuracy
+from utilits.models import create_base_net
 
 import numpy as np
 import pandas as pd
