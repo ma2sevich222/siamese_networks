@@ -10,7 +10,7 @@ def evdata_for_visualisation(eval_data_df, batch_size):
 '''На входе numpy array паттернов, на выходе датафрейм с паттернами(требуеся для визуализаций)'''
 
 
-def patterns_to_df(patterns):
-    paterns_df = [pd.DataFrame(i, columns=['open', 'high', 'low', 'close', 'volume', 'feata', 'featb']) for i in
+def patterns_to_df(patterns, column_list):
+    paterns_df = [pd.DataFrame(i, columns = column_list) for i in
                   patterns]
     return paterns_df

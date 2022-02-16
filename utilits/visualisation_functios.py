@@ -101,10 +101,10 @@ def pattern_samples_plot(patterns, Eval_df, eval_results, pattern_No):
             width2 = 0.05
 
             ax1_up = patterns[pattern_No][
-                patterns[pattern_No].close >= patterns[pattern_No].open
+                patterns[pattern_No].Close >= patterns[pattern_No].Open
             ]
             ax1_down = patterns[pattern_No][
-                patterns[pattern_No].close < patterns[pattern_No].open
+                patterns[pattern_No].Close < patterns[pattern_No].Open
             ]
             ax2_up = plot_sample[plot_sample.Close >= plot_sample.Open]
             ax2_down = plot_sample[plot_sample.Close < plot_sample.Open]
@@ -114,44 +114,44 @@ def pattern_samples_plot(patterns, Eval_df, eval_results, pattern_No):
 
             ax1.bar(
                 ax1_up.index,
-                ax1_up.close - ax1_up.open,
+                ax1_up.Close - ax1_up.Open,
                 width,
-                bottom=ax1_up.open,
+                bottom=ax1_up.Open,
                 color=col1,
             )
             ax1.bar(
                 ax1_up.index,
-                ax1_up.high - ax1_up.close,
+                ax1_up.High - ax1_up.Close,
                 width2,
-                bottom=ax1_up.close,
+                bottom=ax1_up.Close,
                 color=col1,
             )
             ax1.bar(
                 ax1_up.index,
-                ax1_up.low - ax1_up.open,
+                ax1_up.Low - ax1_up.Open,
                 width2,
-                bottom=ax1_up.open,
+                bottom=ax1_up.Open,
                 color=col1,
             )
             ax1.bar(
                 ax1_down.index,
-                ax1_down.close - ax1_down.open,
+                ax1_down.Close - ax1_down.Open,
                 width,
-                bottom=ax1_down.open,
+                bottom=ax1_down.Open,
                 color=col2,
             )
             ax1.bar(
                 ax1_down.index,
-                ax1_down.high - ax1_down.open,
+                ax1_down.High - ax1_down.Open,
                 width2,
-                bottom=ax1_down.open,
+                bottom=ax1_down.Open,
                 color=col2,
             )
             ax1.bar(
                 ax1_down.index,
-                ax1_down.low - ax1_down.close,
+                ax1_down.Low - ax1_down.Close,
                 width2,
-                bottom=ax1_down.close,
+                bottom=ax1_down.Close,
                 color=col2,
             )
 
@@ -251,10 +251,10 @@ def plot_nearlist_patterns(
         fig.add_trace(
             go.Candlestick(
                 x=np.array([i for i in range(len(pattern))]),
-                open=pattern["open"].values,
-                high=pattern["high"].values,
-                low=pattern["low"].values,
-                close=pattern["close"].values,
+                open=pattern["Open"].values,
+                high=pattern["High"].values,
+                low=pattern["Low"].values,
+                close=pattern["Close"].values,
             ),
             secondary_y=False,
             row=row,
