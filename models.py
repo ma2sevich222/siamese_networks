@@ -13,5 +13,5 @@ def create_base_net(input_shape):
     x = Flatten()(x)
     x = Dense(10, activation="tanh")(x)
     model = Model(input, x)
-    model.summary()
+    # model.summary()
     return model

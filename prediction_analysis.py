@@ -12,7 +12,8 @@ pd.set_option("precision", 2)
 
 source_root = 'outputs'
 destination_root = 'outputs'
-file_name = 'test_results_15min_7bar_latentdim100.csv'
+# file_name = 'test_results_15min_7bar_latentdim100.csv'
+file_name = 'test_results.csv'
 
 treshhold_distance = 0.01
 pattern_num = 4
@@ -72,8 +73,8 @@ def extend_plotting(data, tresh_list, pattern_list):
     df_pattern = df[(df.pattern == j)]
     sns.distplot(df_pattern["distance"])
     plt.title(f'pattern = {j}:\n'
-              f'min distance = {df_pattern["distance"].min().round(4)},   '
-              f'max distance = {df_pattern["distance"].max().round(4)}')
+              f'min distance = {df_pattern["distance"].min()},   '
+              f'max distance = {df_pattern["distance"].max()}')
     plt.show()
     print(filtered_df)
 
@@ -86,7 +87,7 @@ def extend_plotting(data, tresh_list, pattern_list):
     fig.update_layout(title='BUY signals predictions', xaxis_title='DATE', yaxis_title='CLOSE', legend_title='Legend')
     fig.show()
 
-list_of_tr = [0.005]
-list_of_patt = [15]
+list_of_tr = [0.05]
+list_of_patt = [208]
 
 extend_plotting(df, list_of_tr, list_of_patt)

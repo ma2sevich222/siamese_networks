@@ -21,16 +21,16 @@ def get_locals(data_df, n):  # данные подаются в формате d
     data_df["max"] = data_df.iloc[
         argrelextrema(data_df.Close.values, np.greater_equal, order=n)[0]
     ]["Close"]
-    f = plt.figure()
-    f.set_figwidth(80)
-    f.set_figheight(65)
-    plt.scatter(data_df.index1, data_df["min"], c="r", label='MIN')
-    plt.scatter(data_df.index1, data_df["max"], c="g", label='MAX')
-    plt.plot(data_df.index1, data_df["Close"])
-    plt.ylabel('CLOSE')
-    plt.title('График локальный минимумов и максимумов')
-    plt.legend()
-    plt.show()
+    # f = plt.figure()
+    # f.set_figwidth(80)
+    # f.set_figheight(65)
+    # plt.scatter(data_df.index1, data_df["min"], c="r", label='MIN')
+    # plt.scatter(data_df.index1, data_df["max"], c="g", label='MAX')
+    # plt.plot(data_df.index1, data_df["Close"])
+    # plt.ylabel('CLOSE')
+    # plt.title('График локальный минимумов и максимумов')
+    # plt.legend()
+    # plt.show()
 
 
 """predictions_plotting-  на вход подается:  data - датафрэйм с результатами теста сети

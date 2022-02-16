@@ -1,23 +1,58 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
+import os
+import random
+
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-from sklearn.preprocessing import normalize
+import tensorflow as tf
 from tensorflow.keras.layers import Input, Lambda
 from tensorflow.keras.models import Model
 
-from functions_for_train_nn import get_locals, get_patterns, create_pairs, get_train_samples
+from utilits.functions_for_train_nn import get_locals, get_patterns, create_pairs, get_train_samples
 from losses import euclid_dis, eucl_dist_output_shape, contrastive_loss, accuracy
 from models import create_base_net
-import json
 
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import normalize
-from keras.models import load_model
 import json
+from tqdm import tqdm
+import GPUtil as GPU
+import psutil
+
+# сделаем так, чтобы tf не резервировал под себя сразу всю память
+# https://stackoverflow.com/questions/34199233/how-to-prevent-tensorflow-from-allocating-the-totality-of-a-gpu-memory
+gpus = tf.config.experimental.list_physical_devices('GPU')
+for gpu in gpus:
+  tf.config.experimental.set_memory_growth(gpu, True)
+
+# Assume that you have 12GB of GPU memory and want to allocate ~4GB:
+# gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
+# sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+def gpu_usage():
+    GPUs = GPU.getGPUs()
+    # XXX: only one GPU on Colab and isn’t guaranteed
+    if len(GPUs) == 0:
+        return False
+    gpu = GPUs[0]
+    process = psutil.Process(os.getpid())
+    print("GPU RAM Free: {0:.0f}MB | Used: {1:.0f}MB | Util: {2:3.0f}% | Total: {3:.0f}MB".format(gpu.memoryFree, gpu.memoryUsed, gpu.memoryUtil*100, gpu.memoryTotal))
+
+seed = 347
+# https://coderoad.ru/51249811/Воспроизводимые-результаты-в-Tensorflow-с-tf-set_random_seed
+os.environ['PYTHONHASHSEED'] = str(seed)
+random.seed(seed)
+np.random.seed(seed)
+tf.random.set_seed(seed)
+
+pd.pandas.set_option("display.max_columns", None)
+pd.set_option("expand_frame_repr", False)
+pd.set_option("precision", 2)
+
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""" Main Block """""""""""""""""""""""""""""""""
 
 pd.pandas.set_option("display.max_columns", None)
 pd.set_option("expand_frame_repr", False)
@@ -28,7 +63,7 @@ source_root = "source_root/15min"
 destination_root = "outputs"
 filename = "VZ_15_Minutes_(with_indicators).txt"
 out_filename ='test_results.csv'
-buy_patterns_save='buy_patterns.txt'
+buy_patterns_save = 'buy_patterns.txt'
 eval_dates_save = 'eval_dates.txt'
 eval_data_df = 'Eval_df.csv'
 train_data_df = 'train_df.csv'
@@ -62,13 +97,13 @@ del df["Time"], df["Date"]
 df["SMA"] = df.iloc[:, 3].rolling(window=10).mean()
 df["CMA30"] = df["Close"].expanding().mean()
 df["SMA"] = df["SMA"].fillna(0)
-print(df)
+# print(df)
 
 """Для обучения модели"""
 START_TRAIN = "2018-01-01 09:00:00"
-END_TRAIN = "2020-12-31 23:00:00"
+END_TRAIN = "2021-11-30 23:00:00"
 """Для тестирования модели"""
-START_TEST = "2021-01-01 09:00:00"
+START_TEST = "2021-12-01 09:00:00"
 END_TEST = "2021-12-31 23:00:00"
 """Отберем данные по максе"""
 mask_train = (df.index >= START_TRAIN) & (df.index <= END_TRAIN)
@@ -90,7 +125,7 @@ n_size = 20  # размер мемори
 
 """Параметры обучения"""
 batch_size = 10
-epochs = 10
+epochs = 100
 treshhold = 0.05 #  граница уверености
 
 
@@ -109,7 +144,8 @@ np.savetxt(f"{destination_root}/{buy_patterns_save}", buy_reshaped)
 with open(f'{destination_root}/{eval_dates_save}', 'w') as f:
     f.write(json.dumps(Eval_dates_str))
 
-print(f"buy_patern.shape: {buy_patern.shape}\t|\sell_patern.shape: {sell_patern.shape}")
+print(f"Найдено уникальных:\n"
+      f"buy_patern.shape: {buy_patern.shape}\t|\tsell_patern.shape: {sell_patern.shape}")
 
 
 
@@ -167,13 +203,9 @@ signal = []  # лэйбл
 k = 0
 treshhold = treshhold
 
-for indexI, eval in enumerate(eval_normlzd):
-
-    print(f'шаг предсказания : {indexI}')
-
+for indexI, eval in enumerate(tqdm(eval_normlzd)):
 
     buy_predictions = []
-
     for buy in buy_patern:
         buy_pred = model.predict([buy.reshape(1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1),
                                   eval.reshape(1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1)])

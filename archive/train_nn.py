@@ -8,7 +8,7 @@ from sklearn.preprocessing import normalize
 from tensorflow.keras.layers import Input, Lambda
 from tensorflow.keras.models import Model
 
-from functions_for_train_nn import get_locals, get_patterns, create_pairs, get_train_samples
+from utilits.functions_for_train_nn import get_locals, get_patterns, create_pairs, get_train_samples
 from losses import euclid_dis, eucl_dist_output_shape, contrastive_loss, accuracy
 from models import create_base_net
 import json
@@ -54,15 +54,17 @@ del df["Time"], df["Date"]
 
 """Добавление фич"""
 df["SMA"] = df.iloc[:, 3].rolling(window=10).mean()
-df["CMA30"] = df["Close"].expanding().mean()
+df["CMA4"] = df["Close"].expanding().mean()
+df["CMA8"] = df["Close"].expanding().mean()
+df["CMA28"] = df["Close"].expanding().mean()
 df["SMA"] = df["SMA"].fillna(0)
 print(df)
 
 """Для обучения модели"""
 START_TRAIN = "2018-01-01 09:00:00"
-END_TRAIN = "2020-12-31 23:00:00"
+END_TRAIN = "2021-09-30 23:00:00"
 """Для тестирования модели"""
-START_TEST = "2021-01-01 09:00:00"
+START_TEST = "2021-10-01 09:00:00"
 END_TEST = "2021-12-31 23:00:00"
 """Отберем данные по максе"""
 mask_train = (df.index >= START_TRAIN) & (df.index <= END_TRAIN)
