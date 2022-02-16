@@ -11,7 +11,7 @@ from tensorflow.keras.models import Model
 from functions_for_train_nn import get_locals, get_patterns, create_pairs, get_train_samples
 from losses import euclid_dis, eucl_dist_output_shape, contrastive_loss, accuracy
 from models import create_base_net
-
+import json
 
 import numpy as np
 import pandas as pd
@@ -29,7 +29,9 @@ destination_root = "outputs"
 filename = "VZ_15_Minutes_(with_indicators).txt"
 out_filename ='test_results.csv'
 buy_patterns_save='buy_patterns.txt'
-
+eval_dates_save = 'eval_dates.txt'
+eval_data_df = 'Eval_df.csv'
+train_data_df = 'train_df.csv'
 
 indices = [
     i for i, x in enumerate(filename) if x == "_"
@@ -100,10 +102,12 @@ buy_patern, sell_patern = get_patterns(
     Max_train__locals["index"].values.tolist(),
     n_size,
 )
-
+Train_df.to_csv(f'{destination_root}/{train_data_df}')
+Eval_df.to_csv(f'{destination_root}/{eval_data_df}')
 buy_reshaped = buy_patern.reshape(buy_patern.shape[0], -1)
 np.savetxt(f"{destination_root}/{buy_patterns_save}", buy_reshaped)
-
+with open(f'{destination_root}/{eval_dates_save}', 'w') as f:
+    f.write(json.dumps(Eval_dates_str))
 
 print(f"buy_patern.shape: {buy_patern.shape}\t|\sell_patern.shape: {sell_patern.shape}")
 
