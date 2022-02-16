@@ -297,6 +297,6 @@ def patterns_heatmap(patterns):
         cos_distance_matrix,
         aspect="auto",
         labels=dict(x="Pattern", y="Pattern", color="Distance"),
-        title="Patters heatmap",
+        title="Patterns distances heatmap",
     )
     fig.show()
