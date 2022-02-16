@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras.layers import Input, Lambda
 from tensorflow.keras.models import Model
+# import tensorflow_addons as tfa  # https://www.tensorflow.org/addons/tutorials/optimizers_cyclicallearningrate
 
 from utilits.functions_for_train_nn import get_locals, get_patterns, create_pairs, get_train_samples
 from utilits.losses import euclid_dis, eucl_dist_output_shape, contrastive_loss, accuracy
@@ -68,8 +69,8 @@ extr_window = 60  # то, на каком окне слева и вправо а
 pattern_size = 15  # размер паттерна
 """Параметры обучения"""
 latent_dim = 50
-batch_size = 100
-epochs = 50
+batch_size = 600
+epochs = 100
 treshhold = 1  # граница уверености для разметки сигнала
 
 """Для обучения модели"""
@@ -178,9 +179,8 @@ distance = Lambda(euclid_dis, output_shape=eucl_dist_output_shape)(
 )
 
 model = Model([input_a, input_b], distance)
-
-model.compile(loss=contrastive_loss, optimizer="adam", metrics=[accuracy])
-history=model.fit([tr_pairs[:, 0], tr_pairs[:, 1]], tr_y, batch_size=batch_size, epochs=epochs)
+model.compile(loss=contrastive_loss, optimizer='adam', metrics=[accuracy])
+history = model.fit([tr_pairs[:, 0], tr_pairs[:, 1]], tr_y, batch_size=batch_size, epochs=epochs)
 
 pd.DataFrame(history.history).plot(figsize=(8,5))
 plt.show()
@@ -222,7 +222,6 @@ for indexI, eval in enumerate(tqdm(eval_normlzd)):
     distance.append(float(min_ex))
 
     if min_ex <= treshhold:
-
         signal.append(1)
     else:
         signal.append(0)
