@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# https://datahacker.rs/019-siamese-network-in-pytorch-with-application-to-face-similarity/
 """
 Created on Wed Feb  9 16:36:25 2022
 
