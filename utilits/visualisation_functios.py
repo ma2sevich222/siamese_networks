@@ -1,14 +1,11 @@
-import pandas as pd
-import joblib
-import numpy as np
 import matplotlib.pyplot as plt
-from pandas._libs import index
-from sklearn.metrics.pairwise import cosine_distances
-import seaborn as sns
+import numpy as np
+import pandas as pd
 import plotly.express as px
-from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from scipy.signal import argrelextrema
+from sklearn.metrics.pairwise import cosine_distances
 
 pd.options.mode.chained_assignment = None
 
@@ -27,8 +24,8 @@ def get_locals(data_df, n):  # данные подаются в формате d
     f = plt.figure()
     f.set_figwidth(80)
     f.set_figheight(65)
-    plt.scatter(data_df.index1, data_df["min"], c="r",label='MIN')
-    plt.scatter(data_df.index1, data_df["max"], c="g",label='MAX')
+    plt.scatter(data_df.index1, data_df["min"], c="r", label='MIN')
+    plt.scatter(data_df.index1, data_df["max"], c="g", label='MAX')
     plt.plot(data_df.index1, data_df["Close"])
     plt.ylabel('CLOSE')
     plt.title('График локальный минимумов и максимумов')
@@ -46,7 +43,7 @@ def predictions_plotting(data, tresh_list, pattern_list):
     for i, j in zip(tresh_list, pattern_list):
         sample_df = data[
             (data.distance <= i) & (data.signal == 1) & (data.pattern == j)
-        ]
+            ]
         filtered_df.append(sample_df)
     fig = go.Figure()
     fig.add_trace(
@@ -83,7 +80,7 @@ eval_results-результат прдедсказаний сети,pattern_No -
 def pattern_samples_plot(patterns, Eval_df, eval_results, pattern_No):
     indexes = eval_results[
         (eval_results.signal == 1) & (eval_results.pattern == pattern_No)
-    ].index
+        ].index
     if len(indexes) == 0:
         print("Данный паттерн не был обнаружен в данных")
     else:
@@ -101,11 +98,11 @@ def pattern_samples_plot(patterns, Eval_df, eval_results, pattern_No):
             width2 = 0.05
 
             ax1_up = patterns[pattern_No][
-                patterns[pattern_No].close >= patterns[pattern_No].open
-            ]
+                patterns[pattern_No].Close >= patterns[pattern_No].Open
+                ]
             ax1_down = patterns[pattern_No][
-                patterns[pattern_No].close < patterns[pattern_No].open
-            ]
+                patterns[pattern_No].Close < patterns[pattern_No].Open
+                ]
             ax2_up = plot_sample[plot_sample.Close >= plot_sample.Open]
             ax2_down = plot_sample[plot_sample.Close < plot_sample.Open]
 
@@ -114,44 +111,44 @@ def pattern_samples_plot(patterns, Eval_df, eval_results, pattern_No):
 
             ax1.bar(
                 ax1_up.index,
-                ax1_up.close - ax1_up.open,
+                ax1_up.Close - ax1_up.Open,
                 width,
-                bottom=ax1_up.open,
+                bottom=ax1_up.Open,
                 color=col1,
             )
             ax1.bar(
                 ax1_up.index,
-                ax1_up.high - ax1_up.close,
+                ax1_up.High - ax1_up.Close,
                 width2,
-                bottom=ax1_up.close,
+                bottom=ax1_up.Close,
                 color=col1,
             )
             ax1.bar(
                 ax1_up.index,
-                ax1_up.low - ax1_up.open,
+                ax1_up.Low - ax1_up.Open,
                 width2,
-                bottom=ax1_up.open,
+                bottom=ax1_up.Open,
                 color=col1,
             )
             ax1.bar(
                 ax1_down.index,
-                ax1_down.close - ax1_down.open,
+                ax1_down.Close - ax1_down.Open,
                 width,
-                bottom=ax1_down.open,
+                bottom=ax1_down.Open,
                 color=col2,
             )
             ax1.bar(
                 ax1_down.index,
-                ax1_down.high - ax1_down.open,
+                ax1_down.High - ax1_down.Open,
                 width2,
-                bottom=ax1_down.open,
+                bottom=ax1_down.Open,
                 color=col2,
             )
             ax1.bar(
                 ax1_down.index,
-                ax1_down.low - ax1_down.close,
+                ax1_down.Low - ax1_down.Close,
                 width2,
-                bottom=ax1_down.close,
+                bottom=ax1_down.Close,
                 color=col2,
             )
 
@@ -224,7 +221,7 @@ def calculate_cos_dist(patterns, pattern):
 
 
 def plot_nearlist_patterns(
-    patterns, nearlist_neibors
+        patterns, nearlist_neibors
 ):  # передаем массив паттернов и список ближайших паттернов
 
     keys = list(nearlist_neibors.keys())
@@ -251,10 +248,10 @@ def plot_nearlist_patterns(
         fig.add_trace(
             go.Candlestick(
                 x=np.array([i for i in range(len(pattern))]),
-                open=pattern["open"].values,
-                high=pattern["high"].values,
-                low=pattern["low"].values,
-                close=pattern["close"].values,
+                open=pattern["Open"].values,
+                high=pattern["High"].values,
+                low=pattern["Low"].values,
+                close=pattern["Close"].values,
             ),
             secondary_y=False,
             row=row,
@@ -300,6 +297,6 @@ def patterns_heatmap(patterns):
         cos_distance_matrix,
         aspect="auto",
         labels=dict(x="Pattern", y="Pattern", color="Distance"),
-        title="Patters heatmap",
+        title="Patterns distances heatmap",
     )
     fig.show()

@@ -53,6 +53,8 @@ treshhold = treshhold
 
 for indexI, eval in enumerate(eval_normlzd):
 
+    print(f'шаг предсказания : {indexI}')
+
 
     buy_predictions = []
 

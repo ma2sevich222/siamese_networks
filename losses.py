@@ -36,3 +36,15 @@ def accuracy(y_true, y_pred):
     '''Compute classification accuracy with a fixed threshold on distances.
     '''
     return K.mean(K.equal(y_true, K.cast(y_pred < 0.5, y_true.dtype)))
+
+
+# computing cosine similarity
+def cosine_sim(vests):
+    x, y = vests
+    x = K.l2_normalize(x, axis=-1)
+    y = K.l2_normalize(y, axis=-1)
+    return K.batch_dot(x, y, axes=-1)
+
+def cos_sim_output_shape(shapes):
+    shape1, shape2 = shapes
+    return (shape1[0], 1)

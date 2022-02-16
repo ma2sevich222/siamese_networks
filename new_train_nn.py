@@ -13,6 +13,12 @@ from losses import euclid_dis, eucl_dist_output_shape, contrastive_loss, accurac
 from models import create_base_net
 import json
 
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import normalize
+from keras.models import load_model
+import json
+
 pd.pandas.set_option("display.max_columns", None)
 pd.set_option("expand_frame_repr", False)
 pd.set_option("precision", 2)
@@ -20,12 +26,12 @@ num_classes = 2
 
 source_root = "source_root/15min"
 destination_root = "outputs"
-model_name = 'Best_model'
 filename = "VZ_15_Minutes_(with_indicators).txt"
 out_filename ='test_results.csv'
-eval_dates_save = 'Eval_dates.txt'
-eval_data_df = 'Eval_df.csv'
 buy_patterns_save='buy_patterns.txt'
+eval_dates_save = 'eval_dates.txt'
+eval_data_df = 'Eval_df.csv'
+train_data_df = 'train_df.csv'
 
 indices = [
     i for i, x in enumerate(filename) if x == "_"
@@ -74,11 +80,7 @@ Train_dates = Train_df.index.to_list()
 Eval_dates = Eval_df.index.astype(str)
 Train_df = Train_df.reset_index(drop=True)
 Eval_df = Eval_df.reset_index(drop=True)
-Eval_dates_str=[str(i) for i in Eval_dates]
-Eval_df.to_csv(f'{destination_root}/{eval_data_df}')
-
-with open(f'{destination_root}/{eval_dates_save}', 'w') as f:
-    f.write(json.dumps(Eval_dates_str))
+Eval_dates_str = [str(i) for i in Eval_dates]
 
 
 """Основыен параметры"""
@@ -92,8 +94,6 @@ epochs = 10
 treshhold = 0.05 #  граница уверености
 
 
-
-
 Min_train_locals, Max_train__locals = get_locals(Train_df, extr_window)
 
 buy_patern, sell_patern = get_patterns(
@@ -102,15 +102,14 @@ buy_patern, sell_patern = get_patterns(
     Max_train__locals["index"].values.tolist(),
     n_size,
 )
-
-
-
-
-print(f"buy_patern.shape: {buy_patern.shape}\t|\sell_patern.shape: {sell_patern.shape}")
-
+Train_df.to_csv(f'{destination_root}/{train_data_df}')
+Eval_df.to_csv(f'{destination_root}/{eval_data_df}')
 buy_reshaped = buy_patern.reshape(buy_patern.shape[0], -1)
 np.savetxt(f"{destination_root}/{buy_patterns_save}", buy_reshaped)
+with open(f'{destination_root}/{eval_dates_save}', 'w') as f:
+    f.write(json.dumps(Eval_dates_str))
 
+print(f"buy_patern.shape: {buy_patern.shape}\t|\sell_patern.shape: {sell_patern.shape}")
 
 
 
@@ -151,5 +150,57 @@ history=model.fit([tr_pairs[:, 0], tr_pairs[:, 1]], tr_y, batch_size=batch_size,
 pd.DataFrame(history.history).plot(figsize=(8,5))
 plt.show()
 
+eval_array = Eval_df.to_numpy()
+eval_samples = [eval_array[i - n_size:i] for i in range(len(eval_array)) if i - n_size >= 0]
+eval_normlzd = [normalize(i, axis=0, norm='max') for i in eval_samples]
+eval_normlzd = np.array(eval_normlzd).reshape(-1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1)
 
-model.save(f'{destination_root}/{model_name}')
+Min_prediction_pattern_name = []
+date = []
+open = []
+high = []
+low = []
+close = []
+volume = []
+distance = []
+signal = []  # лэйбл
+k = 0
+treshhold = treshhold
+
+for indexI, eval in enumerate(eval_normlzd):
+
+    print(f'шаг предсказания : {indexI}')
+
+
+    buy_predictions = []
+
+    for buy in buy_patern:
+        buy_pred = model.predict([buy.reshape(1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1),
+                                  eval.reshape(1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1)])
+        buy_predictions.append(buy_pred)
+
+    date.append(Eval_dates_str[indexI + (n_size - 1)])
+    open.append(float(eval_array[indexI + (n_size - 1), [0]]))
+    high.append(float(eval_array[indexI + (n_size - 1), [1]]))
+    low.append(float(eval_array[indexI + (n_size - 1), [2]]))
+    close.append(float(eval_array[indexI + (n_size - 1), [3]]))
+    volume.append(float(eval_array[indexI + (n_size - 1), [4]]))
+    Min_prediction_pattern_name.append(buy_predictions.index(min(buy_predictions)))
+
+    min_ex = min(buy_predictions)
+    distance.append(float(min_ex))
+
+    if min_ex <= treshhold:
+
+        signal.append(1)
+    else:
+        signal.append(0)
+
+Predictions = pd.DataFrame(
+    list(zip(date, open, high, low, close, volume, signal, Min_prediction_pattern_name, distance)),
+    columns=['date', 'open', 'high', 'low', 'close', 'volume', 'signal', 'pattern No.', 'distance'])
+
+Predictions.to_csv(f'{destination_root}/{out_filename}')
+
+
+
