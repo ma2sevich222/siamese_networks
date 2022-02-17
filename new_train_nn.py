@@ -9,7 +9,6 @@ import tensorflow as tf
 from tensorflow.keras.layers import Input, Lambda
 from tensorflow.keras.models import Model
 # import tensorflow_addons as tfa  # https://www.tensorflow.org/addons/tutorials/optimizers_cyclicallearningrate
-from constants import TRESHHOLD_DISTANCE
 from utilits.functions_for_train_nn import get_locals, get_patterns, create_pairs, get_train_samples
 from utilits.losses import euclid_dis, eucl_dist_output_shape, contrastive_loss, accuracy
 from utilits.models import create_base_net
@@ -54,42 +53,18 @@ pd.set_option("precision", 2)
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 """"""""""""""""""""""""""""" Parameters Block """""""""""""""""""""""""""
-source_root = "source_root/1min"
-destination_root = "outputs"
-filename = "VZ_1_Minute_(with indicators).txt"
-# out_filename ='test_results.csv'
-# buy_patterns_save = 'buy_patterns.txt'
-eval_dates_save = 'eval_dates.txt'
-eval_data_df = 'Eval_df.csv'
-train_data_df = 'train_df.csv'
-
-"""Основыен параметры"""
-num_classes = 2
-extr_window = 60  # то, на каком окне слева и вправо алгоритм размечает экстремумы
-pattern_size = 15  # размер паттерна
-"""Параметры обучения"""
-latent_dim = 50
-batch_size = 600
-epochs = 100
-
-
-"""Для обучения модели"""
-START_TRAIN = "2021-06-01 09:00:00"
-END_TRAIN = "2021-07-31 23:00:00"
-"""Для тестирования модели"""
-START_TEST = "2021-08-01 09:00:00"
-END_TEST = "2021-12-31 23:00:00"  # last date is 2021-08-26 16:00:00
+from constants import *
 
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 """"""""""""""""""""""""""""" Main Block """""""""""""""""""""""""""""""""
 indices = [
-    i for i, x in enumerate(filename) if x == "_"
+    i for i, x in enumerate(FILENAME) if x == "_"
 ]  # находим индексы вхождения '_'
-ticker = filename[: indices[0]]
+ticker = FILENAME[: indices[0]]
 
 """Загрузка и подготовка данных"""
-df = pd.read_csv(f"{source_root}/{filename}")
+df = pd.read_csv(f"{SOURCE_ROOT}/{FILENAME}")
 df.rename(columns=lambda x: x.replace(">", ""), inplace=True)
 df.rename(columns=lambda x: x.replace("<", ""), inplace=True)
 df.rename(columns=lambda x: x.replace(" ", ""), inplace=True)
@@ -128,20 +103,20 @@ Train_df = Train_df.reset_index(drop=True)
 Eval_df = Eval_df.reset_index(drop=True)
 Eval_dates_str = [str(i) for i in Eval_dates]
 
-Min_train_locals, Max_train__locals = get_locals(Train_df, extr_window)
+Min_train_locals, Max_train__locals = get_locals(Train_df, EXTR_WINDOW)
 
 buy_patern, sell_patern = get_patterns(
     Train_df.to_numpy(),
     Min_train_locals["index"].values.tolist(),
     Max_train__locals["index"].values.tolist(),
-    pattern_size,
+    PATTERN_SIZE,
 )
-Train_df.to_csv(f'{destination_root}/{train_data_df}')
-Eval_df.to_csv(f'{destination_root}/{eval_data_df}')
+Train_df.to_csv(f'{DESTINATION_ROOT}/{train_data_df}')
+Eval_df.to_csv(f'{DESTINATION_ROOT}/{eval_data_df}')
 buy_reshaped = buy_patern.reshape(buy_patern.shape[0], -1)
-np.savetxt(f"{destination_root}/buy_patterns_extr_window{extr_window}"
-           f"_pattern_size{pattern_size}.csv", buy_reshaped)
-with open(f'{destination_root}/{eval_dates_save}', 'w') as f:
+np.savetxt(f"{DESTINATION_ROOT}/buy_patterns_extr_window{EXTR_WINDOW}"
+           f"_pattern_size{PATTERN_SIZE}.csv", buy_reshaped)
+with open(f'{DESTINATION_ROOT}/{eval_dates_save}', 'w') as f:
     f.write(json.dumps(Eval_dates_str))
 
 print(f"Найдено уникальных:\n"
@@ -180,13 +155,13 @@ distance = Lambda(euclid_dis, output_shape=eucl_dist_output_shape)(
 
 model = Model([input_a, input_b], distance)
 model.compile(loss=contrastive_loss, optimizer='adam', metrics=[accuracy])
-history = model.fit([tr_pairs[:, 0], tr_pairs[:, 1]], tr_y, batch_size=batch_size, epochs=epochs)
+history = model.fit([tr_pairs[:, 0], tr_pairs[:, 1]], tr_y, batch_size=BATCH_SIZE, epochs=epochs)
 
 pd.DataFrame(history.history).plot(figsize=(8,5))
 plt.show()
 
 eval_array = Eval_df.to_numpy()
-eval_samples = [eval_array[i - pattern_size:i] for i in range(len(eval_array)) if i - pattern_size >= 0]
+eval_samples = [eval_array[i - PATTERN_SIZE:i] for i in range(len(eval_array)) if i - PATTERN_SIZE >= 0]
 eval_normlzd = [normalize(i, axis=0, norm='max') for i in eval_samples]
 eval_normlzd = np.array(eval_normlzd).reshape(-1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1)
 
@@ -210,12 +185,12 @@ for indexI, eval in enumerate(tqdm(eval_normlzd)):
                                   eval.reshape(1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1)])
         buy_predictions.append(buy_pred)
 
-    date.append(Eval_dates_str[indexI + (pattern_size - 1)])
-    open.append(float(eval_array[indexI + (pattern_size - 1), [0]]))
-    high.append(float(eval_array[indexI + (pattern_size - 1), [1]]))
-    low.append(float(eval_array[indexI + (pattern_size - 1), [2]]))
-    close.append(float(eval_array[indexI + (pattern_size - 1), [3]]))
-    volume.append(float(eval_array[indexI + (pattern_size - 1), [4]]))
+    date.append(Eval_dates_str[indexI + (PATTERN_SIZE - 1)])
+    open.append(float(eval_array[indexI + (PATTERN_SIZE - 1), [0]]))
+    high.append(float(eval_array[indexI + (PATTERN_SIZE - 1), [1]]))
+    low.append(float(eval_array[indexI + (PATTERN_SIZE - 1), [2]]))
+    close.append(float(eval_array[indexI + (PATTERN_SIZE - 1), [3]]))
+    volume.append(float(eval_array[indexI + (PATTERN_SIZE - 1), [4]]))
     Min_prediction_pattern_name.append(buy_predictions.index(min(buy_predictions)))
 
     min_ex = min(buy_predictions)
@@ -230,8 +205,8 @@ Predictions = pd.DataFrame(
     list(zip(date, open, high, low, close, volume, signal, Min_prediction_pattern_name, distance)),
     columns=['date', 'open', 'high', 'low', 'close', 'volume', 'signal', 'pattern No.', 'distance'])
 
-Predictions.to_csv(f'{destination_root}/test_results_extr_window{extr_window}'
-                   f'_pattern_size{pattern_size}.csv')
+Predictions.to_csv(f'{DESTINATION_ROOT}/test_results_extr_window{EXTR_WINDOW}'
+                   f'_pattern_size{PATTERN_SIZE}.csv')
 
 
 

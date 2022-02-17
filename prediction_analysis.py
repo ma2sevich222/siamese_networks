@@ -20,7 +20,7 @@ file_name = 'test_results_extr_window60_pattern_size15.csv'
 
 df = pd.read_csv(f'{source_root}/{file_name}')
 df = df.rename(columns={"pattern No.": "pattern"})
-del df['Unnamed: 0']
+# del df['Unnamed: 0']
 print(df)
 print(f'\nВсего распознано уникальных паттернов:\t{len(pd.unique(df["pattern"]))}')
 num_patterns = pd.value_counts(df["pattern"]).to_frame()
@@ -61,10 +61,11 @@ def extend_plotting(data, tresh_list, pattern_list):
     fig.show()
 
 #  Покажем все распозненные паттерны
-list_of_tr = [1.405 for _ in range(num_patterns.index.shape[0])]
-extend_plotting(df, list_of_tr, num_patterns.index.to_list())
+list_of_trashholds = [1.405 for _ in range(num_patterns.index.shape[0])]
+list_of_patterns = num_patterns.index.to_list()
+extend_plotting(df, list_of_trashholds, list_of_patterns)
 
 # покажем конкретный паттерн
-list_of_tr = [1.41]
-list_of_patt = [129]
-extend_plotting(df, list_of_tr, list_of_patt)
+list_of_trashholds = [100]
+list_of_patterns = [129]
+extend_plotting(df, list_of_trashholds, list_of_patterns)

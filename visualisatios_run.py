@@ -7,32 +7,31 @@ from utilits.visualisation_functios import *
 from utilits.data_transforms import *
 from constants import *
 
-destination_root = "outputs"
+
+
 patterns_file_name = 'buy_patterns_extr_window60_pattern_size15.csv'
 results_file_name = 'test_results_extr_window60_pattern_size15.csv'
-eval_data_df = 'Eval_df.csv'
-train_data_df = 'train_df.csv'
-eval_dates_save = 'eval_dates.txt'
+pattern = 129
 
 # загружаем массив размечанных паттернов и результаты тестирования модели
-loader = np.loadtxt(f'{destination_root}/{patterns_file_name}')
-patterns = loader.reshape(-1, 20, 13)  # возвращаем исходный размер
-results = pd.read_csv(f'{destination_root}/{results_file_name}', index_col=[0])
+loader = np.loadtxt(f'{DESTINATION_ROOT}/{patterns_file_name}')
+results = pd.read_csv(f'{DESTINATION_ROOT}/{results_file_name}', index_col=[0])
 results = results.rename(columns={"pattern No.": "pattern"})
-neighbor_patterns = calculate_cos_dist(patterns, pattern)  # ближайшие соседи паттерна
-Eval_df = pd.read_csv(f"{destination_root}/{eval_data_df}")
+Eval_df = pd.read_csv(f"{DESTINATION_ROOT}/{eval_data_df}")
 Eval_df = Eval_df.drop("Unnamed: 0", axis=1)
-Train_df = pd.read_csv(f"{destination_root}/{train_data_df}")
+Train_df = pd.read_csv(f"{DESTINATION_ROOT}/{train_data_df}")
+patterns = loader.reshape(-1, PATTERN_SIZE, len(Eval_df.columns.to_list()))# возвращаем исходный размер
+neighbor_patterns = calculate_cos_dist(patterns, pattern)  # ближайшие соседи паттерна
 
-with open(f'{destination_root}/{eval_dates_save}', 'r') as f:
+with open(f'{DESTINATION_ROOT}/{eval_dates_save}', 'r') as f:
     Eval_dates = json.loads(f.read())
 column_list = Eval_df.columns.to_list()
 
 paterns_df = patterns_to_df(patterns, column_list)
-eval_samples_df = evdata_for_visualisation(Eval_df, batch)
+eval_samples_df = evdata_for_visualisation(Eval_df, BATCH_SIZE)
 
 # График визуального сравнения паттерна и предсказаний
-pattern_samples_plot(paterns_df, eval_samples_df, results, 2)
+pattern_samples_plot(paterns_df, eval_samples_df, results, pattern)
 
 # График визуального сравнения паттерна и ближайших к нему размеченных паттернов
 plot_nearlist_patterns(paterns_df, neighbor_patterns)
@@ -41,7 +40,5 @@ plot_nearlist_patterns(paterns_df, neighbor_patterns)
 patterns_heatmap(patterns)
 
 # функция отображения локальных эемтремумов
-get_locals(Eval_df, extrema_window)  # функция отображения локальных эемтремумов
+get_locals(Eval_df, EXTR_WINDOW)  # функция отображения локальных эемтремумов
 
-# функция показывает на данных, где были определены заданные паттерны с учетом  границ дистанции
-predictions_plotting(results, list_of_trashholds, list_of_patterns)

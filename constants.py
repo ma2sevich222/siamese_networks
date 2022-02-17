@@ -5,18 +5,30 @@ Created on Wed Feb  9 16:36:25 2022
 @author: ma2sevich
 """
 
-SOURCE_ROOT = 'source_root/15min'
-DESTINATION_ROOT = 'outputs'
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""" Parameters Block """""""""""""""""""""""""""
+SOURCE_ROOT = "source_root/1min"
+DESTINATION_ROOT = "outputs"
+FILENAME = "VZ_1_Minute_(with indicators).txt"
+# out_filename ='test_results.csv'
+# buy_patterns_save = 'buy_patterns.txt'
+eval_dates_save = 'eval_dates.txt'
+eval_data_df = 'Eval_df.csv'
+train_data_df = 'train_df.csv'
 
+"""Основыен параметры"""
+TRESHHOLD_DISTANCE = 100
+num_classes = 2
+EXTR_WINDOW = 60  # то, на каком окне слева и вправо алгоритм размечает экстремумы
+PATTERN_SIZE = 15  # размер паттерна
+"""Параметры обучения"""
+latent_dim = 50
+BATCH_SIZE = 600
+epochs = 100
 
-batch = 20  # размер бача
-pattern=2  # паттерн который проверяем
-extrema_window=40  # участок данных на который выбираем локальный минимум или максимум (-значение до точки и +значение после)
-TRESHHOLD_DISTANCE = 1  # граница уверености для разметки сигнала
-# data_shape=(-1, 20, 7) # размер данных
-
-
-# list_of_tr = [0.03, 0.003, 0.005, 0.04, 0.005]
-# list_of_patt = [48, 57, 4, 34, 77]
-# list_of_tr = [0.1]
-# list_of_patt = [75]
+"""Для обучения модели"""
+START_TRAIN = "2021-06-01 09:00:00"
+END_TRAIN = "2021-07-31 23:00:00"
+"""Для тестирования модели"""
+START_TEST = "2021-08-01 09:00:00"
+END_TEST = "2021-12-31 23:00:00"  # last date is 2021-08-26 16:00:00
