@@ -48,7 +48,7 @@ def extend_plotting(data, tresh_list, pattern_list):
                   f'min distance = {np.round(df_pattern["distance"].min(), 4)},   '
                   f'max distance = {np.round(df_pattern["distance"].max(), 4)}')
         plt.show()
-        print(filtered_df)
+        # print(filtered_df)
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=data['date'], y=data['close'], mode='lines', name='CLOSE'))
@@ -59,6 +59,7 @@ def extend_plotting(data, tresh_list, pattern_list):
     fig.update_layout(title=f'BUY signals predictions for file {file_name}',
                       xaxis_title='DATE', yaxis_title='CLOSE', legend_title='Legend')
     fig.show()
+
 
 #  Покажем все распозненные паттерны
 list_of_trashholds = [1.405 for _ in range(num_patterns.index.shape[0])]

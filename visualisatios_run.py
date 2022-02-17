@@ -1,17 +1,14 @@
 import json
-
 import plotly.io as pio
-
-pio.renderers.default = "browser"
 from utilits.visualisation_functios import *
 from utilits.data_transforms import *
 from constants import *
-
+pio.renderers.default = "browser"
 
 
 patterns_file_name = 'buy_patterns_extr_window60_pattern_size15.csv'
 results_file_name = 'test_results_extr_window60_pattern_size15.csv'
-pattern = 129
+pattern = 26
 
 # загружаем массив размечанных паттернов и результаты тестирования модели
 loader = np.loadtxt(f'{DESTINATION_ROOT}/{patterns_file_name}')

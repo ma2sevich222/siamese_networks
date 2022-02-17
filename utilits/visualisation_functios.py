@@ -79,7 +79,7 @@ eval_results-результат прдедсказаний сети,pattern_No -
 
 def pattern_samples_plot(patterns, Eval_df, eval_results, pattern_No):
     indexes = eval_results[
-        (eval_results.signal == 1) & (eval_results.pattern == pattern_No)
+        eval_results.pattern == pattern_No  # тут ошибка - (eval_results.signal == 1) излишно
         ].index
     if len(indexes) == 0:
         print("Данный паттерн не был обнаружен в данных")
