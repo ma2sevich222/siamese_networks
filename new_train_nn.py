@@ -9,7 +9,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import Input, Lambda
 from tensorflow.keras.models import Model
 # import tensorflow_addons as tfa  # https://www.tensorflow.org/addons/tutorials/optimizers_cyclicallearningrate
-
+from constants import TRESHHOLD_DISTANCE
 from utilits.functions_for_train_nn import get_locals, get_patterns, create_pairs, get_train_samples
 from utilits.losses import euclid_dis, eucl_dist_output_shape, contrastive_loss, accuracy
 from utilits.models import create_base_net
@@ -71,7 +71,7 @@ pattern_size = 15  # размер паттерна
 latent_dim = 50
 batch_size = 600
 epochs = 100
-treshhold = 1  # граница уверености для разметки сигнала
+
 
 """Для обучения модели"""
 START_TRAIN = "2021-06-01 09:00:00"
@@ -200,7 +200,7 @@ volume = []
 distance = []
 signal = []  # лэйбл
 k = 0
-treshhold = treshhold
+
 
 for indexI, eval in enumerate(tqdm(eval_normlzd)):
 
@@ -221,7 +221,7 @@ for indexI, eval in enumerate(tqdm(eval_normlzd)):
     min_ex = min(buy_predictions)
     distance.append(float(min_ex))
 
-    if min_ex <= treshhold:
+    if min_ex <= TRESHHOLD_DISTANCE:
         signal.append(1)
     else:
         signal.append(0)

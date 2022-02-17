@@ -8,8 +8,8 @@ from utilits.data_transforms import *
 from constants import *
 
 destination_root = "outputs"
-patterns_file_name = 'buy_patterns.txt'
-results_file_name = 'test_results.csv'
+patterns_file_name = 'buy_patterns_extr_window60_pattern_size15.csv'
+results_file_name = 'test_results_extr_window60_pattern_size15.csv'
 eval_data_df = 'Eval_df.csv'
 train_data_df = 'train_df.csv'
 eval_dates_save = 'eval_dates.txt'
