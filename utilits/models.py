@@ -15,3 +15,4 @@ def create_base_net(input_shape, latent_dim):
     model = Model(input, x)
     # model.summary()
     return model
+

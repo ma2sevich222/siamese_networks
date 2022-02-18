@@ -31,7 +31,7 @@ neighbor_patterns = calculate_cos_dist(patterns, pattern_num)  # ближайш�
 column_list = Eval_df.columns.to_list()
 
 paterns_df = patterns_to_df(patterns, column_list)
-eval_samples_df = evdata_for_visualisation(Eval_df, BATCH_SIZE)
+eval_samples_df = evdata_for_visualisation(Eval_df, PATTERN_SIZE)
 
 # График визуального сравнения паттерна и предсказаний
 pattern_samples_plot(paterns_df, eval_samples_df, results, pattern_num)

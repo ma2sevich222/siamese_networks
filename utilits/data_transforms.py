@@ -2,8 +2,8 @@
 import pandas as pd
 
 
-def evdata_for_visualisation(eval_data_df, batch_size):
-    eval_df = [eval_data_df[i - 20:i] for i in eval_data_df.index if (i - 20) >= 0]
+def evdata_for_visualisation(eval_data_df, pattern_size):
+    eval_df = [eval_data_df[i - pattern_size:i] for i in eval_data_df.index if (i - pattern_size) >= 0]
     return eval_df
 
 
