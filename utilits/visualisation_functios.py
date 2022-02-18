@@ -77,9 +77,9 @@ eval_results-результат прдедсказаний сети,pattern_No -
 входных данных для которого сеть предсказала этот паттерн """
 
 
-def pattern_samples_plot(patterns, Eval_df, eval_results, pattern_No):
+def pattern_samples_plot(patterns, Eval_df, eval_results, pattern_num):
     indexes = eval_results[
-        eval_results.pattern == pattern_No  # тут ошибка - (eval_results.signal == 1) излишно
+        eval_results.pattern == pattern_num  # тут ошибка - (eval_results.signal == 1) излишно
         ].index
     if len(indexes) == 0:
         print("Данный паттерн не был обнаружен в данных")
@@ -89,7 +89,7 @@ def pattern_samples_plot(patterns, Eval_df, eval_results, pattern_No):
             plot_sample = Eval_df[i].reset_index()
             plt.figure(figsize=[5, 5])
             fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 3))
-            ax1.set(ylabel="PRICE", title=f"Размеченный паттерн: {pattern_No}")
+            ax1.set(ylabel="PRICE", title=f"Размеченный паттерн: {pattern_num}")
             ax2.set(
                 ylabel="PRICE",
                 title=f"Участок тренда, определенный как данный паттерн и дистанция: {i}/ distance:{round(eval_results.distance[i], 4)}",
@@ -97,11 +97,11 @@ def pattern_samples_plot(patterns, Eval_df, eval_results, pattern_No):
             width = 0.4
             width2 = 0.05
 
-            ax1_up = patterns[pattern_No][
-                patterns[pattern_No].Close >= patterns[pattern_No].Open
+            ax1_up = patterns[pattern_num][
+                patterns[pattern_num].Close >= patterns[pattern_num].Open
                 ]
-            ax1_down = patterns[pattern_No][
-                patterns[pattern_No].Close < patterns[pattern_No].Open
+            ax1_down = patterns[pattern_num][
+                patterns[pattern_num].Close < patterns[pattern_num].Open
                 ]
             ax2_up = plot_sample[plot_sample.Close >= plot_sample.Open]
             ax2_down = plot_sample[plot_sample.Close < plot_sample.Open]

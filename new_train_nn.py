@@ -116,8 +116,8 @@ Eval_df.to_csv(f'{DESTINATION_ROOT}/{eval_data_df}')
 buy_reshaped = buy_patern.reshape(buy_patern.shape[0], -1)
 np.savetxt(f"{DESTINATION_ROOT}/buy_patterns_extr_window{EXTR_WINDOW}"
            f"_pattern_size{PATTERN_SIZE}.csv", buy_reshaped)
-with open(f'{DESTINATION_ROOT}/{eval_dates_save}', 'w') as f:
-    f.write(json.dumps(Eval_dates_str))
+# with open(f'{DESTINATION_ROOT}/{eval_dates_save}', 'w') as f:
+#     f.write(json.dumps(Eval_dates_str))
 
 print(f"Найдено уникальных:\n"
       f"buy_patern.shape: {buy_patern.shape}\t|\tsell_patern.shape: {sell_patern.shape}")
@@ -203,7 +203,7 @@ for indexI, eval in enumerate(tqdm(eval_normlzd)):
 
 Predictions = pd.DataFrame(
     list(zip(date, open, high, low, close, volume, signal, Min_prediction_pattern_name, distance)),
-    columns=['date', 'open', 'high', 'low', 'close', 'volume', 'signal', 'pattern No.', 'distance'])
+    columns=['date', 'open', 'high', 'low', 'close', 'volume', 'signal', 'pattern', 'distance'])
 
 Predictions.to_csv(f'{DESTINATION_ROOT}/test_results_extr_window{EXTR_WINDOW}'
                    f'_pattern_size{PATTERN_SIZE}.csv')
