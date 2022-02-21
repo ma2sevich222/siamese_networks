@@ -1,4 +1,5 @@
-import matplotlib.pyplot as plt
+import math
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -78,124 +79,54 @@ eval_results-результат прдедсказаний сети,pattern_No -
 
 
 def pattern_samples_plot(patterns, Eval_df, eval_results, pattern_num):
-    indexes = eval_results[
-        eval_results.pattern == pattern_num  # тут ошибка - (eval_results.signal == 1) излишно
-        ].index
+    sorted = eval_results.sort_values(by=['distance'])
+
+    indexes = sorted[(sorted.signal == 1) & (sorted.pattern == pattern_num)].index
     if len(indexes) == 0:
-        print("Данный паттерн не был обнаружен в данных")
+        print('Данный паттерн не был обнаружен в данных')
+
+
     else:
+
         print(f"Найдено совпадений: {len(indexes)}")
-        for i in indexes:
-            plot_sample = Eval_df[i].reset_index()
-            plt.figure(figsize=[5, 5])
-            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 3))
-            ax1.set(ylabel="PRICE", title=f"Размеченный паттерн: {pattern_num}")
-            ax2.set(
-                ylabel="PRICE",
-                title=f"Участок тренда, определенный как данный паттерн и дистанция: {i}/ distance:{round(eval_results.distance[i], 4)}",
-            )
-            width = 0.4
-            width2 = 0.05
 
-            ax1_up = patterns[pattern_num][
-                patterns[pattern_num].Close >= patterns[pattern_num].Open
-                ]
-            ax1_down = patterns[pattern_num][
-                patterns[pattern_num].Close < patterns[pattern_num].Open
-                ]
-            ax2_up = plot_sample[plot_sample.Close >= plot_sample.Open]
-            ax2_down = plot_sample[plot_sample.Close < plot_sample.Open]
+        if len(indexes) > 21:
+            indexes = indexes[:21]
 
-            col1 = "green"
-            col2 = "red"
+        list_of_plots = [Eval_df[i].reset_index() for i in indexes]
+        list_of_plots.insert(0, patterns[pattern_num])
 
-            ax1.bar(
-                ax1_up.index,
-                ax1_up.Close - ax1_up.Open,
-                width,
-                bottom=ax1_up.Open,
-                color=col1,
-            )
-            ax1.bar(
-                ax1_up.index,
-                ax1_up.High - ax1_up.Close,
-                width2,
-                bottom=ax1_up.Close,
-                color=col1,
-            )
-            ax1.bar(
-                ax1_up.index,
-                ax1_up.Low - ax1_up.Open,
-                width2,
-                bottom=ax1_up.Open,
-                color=col1,
-            )
-            ax1.bar(
-                ax1_down.index,
-                ax1_down.Close - ax1_down.Open,
-                width,
-                bottom=ax1_down.Open,
-                color=col2,
-            )
-            ax1.bar(
-                ax1_down.index,
-                ax1_down.High - ax1_down.Open,
-                width2,
-                bottom=ax1_down.Open,
-                color=col2,
-            )
-            ax1.bar(
-                ax1_down.index,
-                ax1_down.Low - ax1_down.Close,
-                width2,
-                bottom=ax1_down.Close,
-                color=col2,
-            )
+        number_rows = int(math.ceil(len(list_of_plots) / 5))
+        number_cols = 5
 
-            ax2.bar(
-                ax2_up.index,
-                ax2_up.Close - ax2_up.Open,
-                width,
-                bottom=ax2_up.Open,
-                color=col1,
-            )
-            ax2.bar(
-                ax2_up.index,
-                ax2_up.High - ax2_up.Close,
-                width2,
-                bottom=ax2_up.Close,
-                color=col1,
-            )
-            ax2.bar(
-                ax2_up.index,
-                ax2_up.Low - ax2_up.Open,
-                width2,
-                bottom=ax2_up.Open,
-                color=col1,
-            )
-            ax2.bar(
-                ax2_down.index,
-                ax2_down.Close - ax2_down.Open,
-                width,
-                bottom=ax2_down.Open,
-                color=col2,
-            )
-            ax2.bar(
-                ax2_down.index,
-                ax2_down.High - ax2_down.Open,
-                width2,
-                bottom=ax2_down.Open,
-                color=col2,
-            )
-            ax2.bar(
-                ax2_down.index,
-                ax2_down.Low - ax2_down.Close,
-                width2,
-                bottom=ax2_down.Close,
-                color=col2,
-            )
+        names = [eval_results.distance[i] for i in indexes]
+        plots_annotations = [f'Паттерн: {pattern_num}']
 
-    plt.show()
+        for i, j in zip(indexes, names):
+            add = f'Шаг {str(i)}, Дистанция {str(round(j, 4))}'
+            plots_annotations.append(add)
+
+        fig = make_subplots(rows=number_rows, cols=number_cols, subplot_titles=plots_annotations)
+
+        k = 0
+        for row in range(1, number_rows + 1):
+            for col in range(1, 6):
+
+                fig.add_trace(go.Candlestick(x=np.array([i for i in range(len(list_of_plots[k]))]),
+                                             open=list_of_plots[k]['Open'].values,
+                                             high=list_of_plots[k]['High'].values,
+                                             low=list_of_plots[k]['Low'].values,
+                                             close=list_of_plots[k]['Close'].values), secondary_y=False, row=row,
+                              col=col)
+                fig.update_xaxes(rangeslider={'visible': False}, row=row, col=col)
+                k += 1
+                if k == len(list_of_plots):
+                    break
+
+        fig.update_layout(width=2400, height=800,
+                          title_text="Визуальное сравннение паттерна и предсказаний на проверочных данных")
+        fig.update_yaxes(automargin=True)
+        fig.show()
 
 
 """calculate_cos_dist - принимает массив паттернов и номер паттерна который интересует, возвращает словарь номер паттерна- дистанция.
