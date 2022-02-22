@@ -1,6 +1,9 @@
 import pandas as pd
 from constants import START_TRAIN, END_TRAIN, START_TEST, END_TEST
 
+pd.pandas.set_option("display.max_columns", None)
+pd.set_option("expand_frame_repr", False)
+pd.set_option("precision", 2)
 
 def data_load(SOURCE_ROOT, FILENAME):
     df = pd.read_csv(f"{SOURCE_ROOT}/{FILENAME}")
@@ -19,6 +22,7 @@ def data_load(SOURCE_ROOT, FILENAME):
     df.sort_index(ascending=True, inplace=False)
     df = df.rename(columns={"<Volume>": "Volume"})
     del df["Time"], df["Date"]
+    del df['MACD'], df['MACDAvg'], df['MACDDiff'], df['AvgExp'], df['vwap_reset'], df['AvgExp.1']
     print(df)
 
     """Добавление фич"""
