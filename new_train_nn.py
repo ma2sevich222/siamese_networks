@@ -12,10 +12,12 @@ from tensorflow.keras.models import Model
 from utilits.functions_for_train_nn import get_locals, get_patterns, create_pairs, get_train_samples
 from utilits.losses import euclid_dis, eucl_dist_output_shape, contrastive_loss, accuracy
 from utilits.models import create_base_net
+from utilits.data_load import data_load
 
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import normalize
+
 from tqdm import tqdm
 import GPUtil as GPU
 import psutil
@@ -62,45 +64,9 @@ indices = [
 ]  # находим индексы вхождения '_'
 ticker = FILENAME[: indices[0]]
 
+
 """Загрузка и подготовка данных"""
-df = pd.read_csv(f"{SOURCE_ROOT}/{FILENAME}")
-df.rename(columns=lambda x: x.replace(">", ""), inplace=True)
-df.rename(columns=lambda x: x.replace("<", ""), inplace=True)
-df.rename(columns=lambda x: x.replace(" ", ""), inplace=True)
-del df["ZeroLine"]
-columns = df.columns.tolist()
-
-"""Формат даты в Datetime"""
-new_df = df["Date"].str.split(".", expand=True)
-df["Date"] = new_df[2] + "-" + new_df[1] + "-" + new_df[0] + " " + df["Time"]
-df.Date = pd.to_datetime(df.Date)
-df.dropna(axis=0, inplace=True)  # Удаляем наниты
-df["Datetime"] = df["Date"]
-df.set_index("Datetime", inplace=True)
-df.sort_index(ascending=True, inplace=False)
-df = df.rename(columns={"<Volume>": "Volume"})
-del df["Time"], df["Date"]
-print(df)
-
-"""Добавление фич"""
-df["SMA"] = df.iloc[:, 3].rolling(window=10).mean()
-df["CMA30"] = df["Close"].expanding().mean()
-df["SMA"] = df["SMA"].fillna(0)
-# print(df)
-
-"""Отберем данные по максе"""
-mask_train = (df.index >= START_TRAIN) & (df.index <= END_TRAIN)
-Train_df = df.loc[mask_train]
-mask_test = (df.index >= START_TEST) & (df.index <= END_TEST)
-Eval_df = df.loc[mask_test]
-print(f'Датасет для поиска петтернов: {Train_df.shape}, период проверки: {Eval_df.shape}')
-
-"""Сохраняем даты, удаляем из основынх датафрэймов"""
-Train_dates = Train_df.index.to_list()
-Eval_dates = Eval_df.index.astype(str)
-Train_df = Train_df.reset_index(drop=True)
-Eval_df = Eval_df.reset_index(drop=True)
-Eval_dates_str = [str(i) for i in Eval_dates]
+Train_df, Eval_df, Eval_dates_str = data_load(SOURCE_ROOT, FILENAME)
 
 Min_train_locals, Max_train__locals = get_locals(Train_df, EXTR_WINDOW)
 
@@ -110,13 +76,12 @@ buy_patern, sell_patern = get_patterns(
     Max_train__locals["index"].values.tolist(),
     PATTERN_SIZE,
 )
-Train_df.to_csv(f'{DESTINATION_ROOT}/{train_data_df}')
-Eval_df.to_csv(f'{DESTINATION_ROOT}/{eval_data_df}')
+
+
 buy_reshaped = buy_patern.reshape(buy_patern.shape[0], -1)
 np.savetxt(f"{DESTINATION_ROOT}/buy_patterns_extr_window{EXTR_WINDOW}"
            f"_pattern_size{PATTERN_SIZE}.csv", buy_reshaped)
-# with open(f'{DESTINATION_ROOT}/{eval_dates_save}', 'w') as f:
-#     f.write(json.dumps(Eval_dates_str))
+
 
 print(f"Найдено уникальных:\n"
       f"buy_patern.shape: {buy_patern.shape}\t|\tsell_patern.shape: {sell_patern.shape}")
