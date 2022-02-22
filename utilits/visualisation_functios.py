@@ -81,7 +81,7 @@ eval_results-результат прдедсказаний сети,pattern_No -
 def pattern_samples_plot(patterns, Eval_df, eval_results, pattern_num):
     sorted = eval_results.sort_values(by=['distance'])
 
-    indexes = sorted[(sorted.signal == 1) & (sorted.pattern == pattern_num)].index
+    indexes = sorted[(sorted.pattern == pattern_num)].index
     if len(indexes) == 0:
         print('Данный паттерн не был обнаружен в данных')
 
@@ -90,8 +90,8 @@ def pattern_samples_plot(patterns, Eval_df, eval_results, pattern_num):
 
         print(f"Найдено совпадений: {len(indexes)}")
 
-        if len(indexes) > 21:
-            indexes = indexes[:21]
+        if len(indexes) > 24:
+            indexes = indexes[:24]
 
         list_of_plots = [Eval_df[i].reset_index() for i in indexes]
         list_of_plots.insert(0, patterns[pattern_num])
@@ -123,7 +123,7 @@ def pattern_samples_plot(patterns, Eval_df, eval_results, pattern_num):
                 if k == len(list_of_plots):
                     break
 
-        fig.update_layout(width=2400, height=800,
+        fig.update_layout(width=2400, height=1400,
                           title_text="Визуальное сравннение паттерна и предсказаний на проверочных данных")
         fig.update_yaxes(automargin=True)
         fig.show()

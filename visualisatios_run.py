@@ -15,7 +15,7 @@ pio.renderers.default = "browser"
 
 patterns_file_name = 'buy_patterns_extr_window60_pattern_size15.csv'
 results_file_name = 'test_results_extr_window60_pattern_size15.csv'
-pattern_num = 26  # номер паспознаваемого паттерна
+pattern_num = 66  # номер паспознаваемого паттерна
 
 # загружаем массив размечанных паттернов и результаты тестирования модели
 loader = np.loadtxt(f'{DESTINATION_ROOT}/{patterns_file_name}')
