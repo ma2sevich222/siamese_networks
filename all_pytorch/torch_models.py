@@ -1,33 +1,15 @@
-
-import matplotlib.pyplot as plt
-import numpy as np
-import random
-from PIL import Image
-import PIL.ImageOps
-
-import torchvision
-import torchvision.datasets as datasets
-import torchvision.transforms as transforms
-from torch.utils.data import DataLoader, Dataset
-import torchvision.utils
-import torch
-from torch.autograd import Variable
 import torch.nn as nn
-from torch import optim
-import torch.nn.functional as F
-
-
 
 
 # create the Siamese Neural Network
 class SiameseNetwork(nn.Module):
 
-    def __init__(self, dim=2):
+    def __init__(self, embeddig_dim=2):
         super(SiameseNetwork, self).__init__()
 
         # Setting up the Sequential of CNN Layers
         self.cnn1 = nn.Sequential(
-            nn.Conv2d(1, 96, kernel_size=2 ,stride=1),
+            nn.Conv2d(1, 96, kernel_size=2, stride=1),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(3, stride=1),
 
@@ -35,20 +17,20 @@ class SiameseNetwork(nn.Module):
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2, stride=1),
 
-            nn.Conv2d(256, 384, kernel_size=1 ,stride=1),
+            nn.Conv2d(256, 384, kernel_size=2, stride=1),
             nn.ReLU(inplace=True),
 
         )
 
         # Setting up the Fully Connected Layers
         self.fc1 = nn.Sequential(
-            nn.Linear(30720, 256),
+            nn.Linear(24192, 256),
             nn.ReLU(inplace=True),
 
             nn.Linear(256, 126),
             nn.ReLU(inplace=True),
 
-            nn.Linear(126, dim)
+            nn.Linear(126, embeddig_dim)
         )
 
     def forward_once(self, x):

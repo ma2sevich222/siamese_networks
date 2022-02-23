@@ -1,4 +1,7 @@
-import matplotlib as plt
+import random
+
+import matplotlib.pyplot as plt
+import numpy as np
 from torch import optim
 
 
@@ -7,7 +10,7 @@ def show_plot(iteration, loss):
     plt.show()
 
 
-def train_net(crit, lr, epochs, my_dataloader,net, labels_1d=False):
+def train_net(crit, lr, epochs, my_dataloader, net, labels_1d=False):
     optimizer = optim.Adam(net.parameters(), lr)
     counter = []
     loss_history = []
@@ -48,3 +51,19 @@ def train_net(crit, lr, epochs, my_dataloader,net, labels_1d=False):
                 loss_history.append(loss_contrastive.item())
 
     show_plot(counter, loss_history)
+
+
+def cos_em_create_pairs(x, digit_indices, num_classes):
+    pairs = []
+    labels = []
+    n = min([len(digit_indices[d]) for d in range(num_classes)]) - 1
+    for d in range(num_classes):
+        for i in range(n):
+            z1, z2 = digit_indices[d][i], digit_indices[d][i + 1]
+            pairs += [[x[z1], x[z2]]]
+            inc = random.randrange(1, num_classes)
+            dn = (d + inc) % num_classes
+            z1, z2 = digit_indices[d][i], digit_indices[dn][i]
+            pairs += [[x[z1], x[z2]]]
+            labels += [1, -1]
+    return np.array(pairs), np.array(labels)
