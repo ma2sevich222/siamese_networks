@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import torch
+print(torch.__version__)
 from sklearn.preprocessing import normalize
 from torch.utils.data import TensorDataset, DataLoader
 from tqdm import tqdm
@@ -121,10 +122,10 @@ with torch.no_grad():
         volume.append(float(eval_array[indexI + (PATTERN_SIZE - 1), [4]]))
         Min_prediction_pattern_name.append(buy_predictions.index(min(buy_predictions)))
 
-        min_ex = min(buy_predictions)
-        distance.append(float(min_ex))
+        buy_pred = max(buy_predictions)
+        distance.append(float(buy_pred))
 
-        if min_ex <= TRESHHOLD_DISTANCE:
+        if buy_pred >= 0.9:
             signal.append(1)
         else:
             signal.append(0)
