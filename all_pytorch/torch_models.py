@@ -1,4 +1,6 @@
+
 import torch.nn as nn
+
 
 
 # create the Siamese Neural Network
@@ -18,13 +20,13 @@ class SiameseNetwork(nn.Module):
             nn.MaxPool2d(2, stride=1),
 
             nn.Conv2d(256, 384, kernel_size=2, stride=1),
-            nn.ReLU(inplace=True),
+            nn.ReLU(inplace=True)
 
         )
 
         # Setting up the Fully Connected Layers
         self.fc1 = nn.Sequential(
-            nn.Linear(24192, 256),
+            nn.LazyLinear(256),
             nn.ReLU(inplace=True),
 
             nn.Linear(256, 126),
