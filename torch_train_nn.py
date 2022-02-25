@@ -1,13 +1,13 @@
 import numpy as np
 import pandas as pd
 import torch
-print(torch.__version__)
+import torchvision.models as models
 from sklearn.preprocessing import normalize
 from torch.utils.data import TensorDataset, DataLoader
 from tqdm import tqdm
 
 from all_pytorch.torch_functions_for_train import train_net, cos_em_create_pairs
-from all_pytorch.torch_models import SiameseNetwork
+from all_pytorch.torch_models import SiameseNetwork_extend
 from utilits.data_load import data_load
 from utilits.functions_for_train_nn import get_locals, get_patterns, get_train_samples
 
@@ -15,11 +15,13 @@ from utilits.functions_for_train_nn import get_locals, get_patterns, get_train_s
 """"""""""""""""""""""""""""" Parameters Block """""""""""""""""""""""""""
 from constants import *
 
-epochs = 5
+epochs = 100
 lr = 0.0005
-embeddig_dim = 10
+embedding_dim = 10
 margin = 0.5
 batch_size = 10
+base_model = models.mnasnet1_0(pretrained=True) #  https://pytorch.org/vision/stable/models.html - другие модели
+model_name = (base_model.__class__.__name__)
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 """"""""""""""""""""""""""""" Main Block """""""""""""""""""""""""""""""""
@@ -77,7 +79,7 @@ tensor_y = torch.Tensor(tr_y)
 my_dataset = TensorDataset(tensor_x1, tensor_x2, tensor_y)  # create your datset
 my_dataloader = DataLoader(my_dataset, batch_size=batch_size)
 
-net = SiameseNetwork(embeddig_dim=embeddig_dim).cuda()
+net = SiameseNetwork_extend(base_model, embeddig_dim=embedding_dim).cuda()
 cos_crit = torch.nn.CosineEmbeddingLoss(margin=margin)
 
 train_net(cos_crit, lr, epochs, my_dataloader, net, labels_1d=False)  # crit, lr, epochs, my_dataloader,net,
@@ -100,6 +102,7 @@ distance = []
 signal = []  # лэйбл
 k = 0
 
+net.eval()
 with torch.no_grad():
     for indexI, eval_arr in enumerate(tqdm(eval_normlzd)):
 
@@ -135,4 +138,4 @@ Predictions = pd.DataFrame(
     columns=['date', 'open', 'high', 'low', 'close', 'volume', 'signal', 'pattern', 'distance'])
 
 Predictions.to_csv(f'{DESTINATION_ROOT}/test_results_extr_window{EXTR_WINDOW}'
-                   f'_pattern_size{PATTERN_SIZE}.csv')
+                   f'_pattern_size{PATTERN_SIZE}_{model_name}.csv')
