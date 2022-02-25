@@ -13,14 +13,10 @@ from utilits.data_load import data_load
 
 pio.renderers.default = "browser"
 
-pd.pandas.set_option("display.max_columns", None)
-pd.set_option("expand_frame_repr", False)
-pd.set_option("precision", 2)
 
-
-patterns_file_name = 'buy_patterns_extr_window15_latent_dim5_pattern_size20.csv'
-results_file_name = 'test_results_extr_window15_latent_dim5_pattern_size20.csv'
-pattern_num = 112  # номер паспознаваемого паттерна
+patterns_file_name = 'buy_patterns_extr_window60_pattern_size15.csv'
+results_file_name = 'test_results_extr_window60_pattern_size15.csv'
+pattern_num = 98  # номер паспознаваемого паттерна
 
 # загрузка данных, которые использовались для обучение и теста модели
 Train_df, Eval_df, Eval_dates_str = data_load(SOURCE_ROOT, FILENAME)

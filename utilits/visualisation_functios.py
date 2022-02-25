@@ -79,7 +79,7 @@ eval_results-результат прдедсказаний сети,pattern_No -
 
 
 def pattern_samples_plot(patterns, Eval_df, eval_results, pattern_num):
-    sorted = eval_results.sort_values(by=['distance'])
+    sorted = eval_results.sort_values(by=['distance'], ascending=False)
 
     indexes = sorted[(sorted.pattern == pattern_num)].index
     if len(indexes) == 0:
