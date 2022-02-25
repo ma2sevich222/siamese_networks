@@ -39,7 +39,7 @@ plt.show()
 def extend_plotting(data, tresh_list, pattern_list):
     filtered_df = []
     for i, j in zip(tresh_list, pattern_list):
-        sample_df = data[(data.distance <= i) & (data.pattern == j)]
+        sample_df = data[(data.distance >= i) & (data.pattern == j)]
         filtered_df.append(sample_df)
 
         df_pattern = df[(df.pattern == j)]
@@ -53,7 +53,7 @@ def extend_plotting(data, tresh_list, pattern_list):
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=data['date'], y=data['close'], mode='lines', name='CLOSE'))
     for i, j, k in zip(filtered_df, tresh_list, pattern_list):
-        fig.add_trace(go.Scatter(x=i['date'], y=i['close'], mode='markers', name=f"distance <= {j} / patern:{k}",
+        fig.add_trace(go.Scatter(x=i['date'], y=i['close'], mode='markers', name=f"distance >= {j} / patern:{k}",
                                  marker=dict(symbol='triangle-up', size=15)))
 
     fig.update_layout(title=f'BUY signals predictions for file {file_name}',
@@ -62,7 +62,7 @@ def extend_plotting(data, tresh_list, pattern_list):
 
 
 #  Покажем все распозненные паттерны
-list_of_trashholds = [1.405 for _ in range(num_patterns.index.shape[0])]
+list_of_trashholds = [0.99 for _ in range(num_patterns.index.shape[0])]
 list_of_patterns = num_patterns.index.to_list()
 extend_plotting(df, list_of_trashholds, list_of_patterns)
 
