@@ -20,7 +20,13 @@ lr = 0.0005
 embedding_dim = 10
 margin = 0.5
 batch_size = 10
-base_model = models.mnasnet1_0(pretrained=True) #  https://pytorch.org/vision/stable/models.html - другие модели
+""" Добавляем предобученную модель из модуля torchvision.models.
+Переходим по ссылке https://pytorch.org/vision/stable/models.html,
+подставляем нужную модель как в примере :
+base_model = models.< название модели из документации >(pretrained=True)
+ На данный момент доступны: resnet18 , resnet50 , shufflenet_v2_x1_0 , mnasnet1_0 """
+
+base_model = models.mnasnet1_0(pretrained=True)
 model_name = (base_model.__class__.__name__)
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
