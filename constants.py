@@ -21,10 +21,7 @@ TRESHHOLD_DISTANCE = 100
 num_classes = 2
 EXTR_WINDOW = 60  # то, на каком окне слева и вправо алгоритм размечает экстремумы
 PATTERN_SIZE = 15  # размер паттерна
-"""Параметры обучения"""
-latent_dim = 50
-BATCH_SIZE = 600
-epochs = 100
+
 
 """Для обучения модели"""
 START_TRAIN = "2021-06-01 09:00:00"

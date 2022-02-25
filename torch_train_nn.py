@@ -17,7 +17,7 @@ from constants import *
 
 epochs = 100
 lr = 0.0005
-embedding_dim = 10
+latent_dim = 10
 margin = 0.5
 batch_size = 10
 
@@ -83,7 +83,7 @@ tensor_y = torch.Tensor(tr_y)
 my_dataset = TensorDataset(tensor_x1, tensor_x2, tensor_y)  # create your datset
 my_dataloader = DataLoader(my_dataset, batch_size=batch_size)
 
-net = SiameseNetwork_extend(base_model, embeddig_dim=embedding_dim).cuda()
+net = SiameseNetwork_extend(base_model, embeddig_dim=latent_dim).cuda()
 cos_crit = torch.nn.CosineEmbeddingLoss(margin=margin)
 
 train_net(cos_crit, lr, epochs, my_dataloader, net, labels_1d=False)  # crit, lr, epochs, my_dataloader,net,
