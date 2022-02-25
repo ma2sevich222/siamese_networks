@@ -20,6 +20,7 @@ lr = 0.0005
 embedding_dim = 10
 margin = 0.5
 batch_size = 10
+
 """ Добавляем предобученную модель из модуля torchvision.models.
 Переходим по ссылке https://pytorch.org/vision/stable/models.html,
 подставляем нужную модель как в примере :
