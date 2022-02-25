@@ -14,7 +14,7 @@ pd.set_option("precision", 2)
 
 source_root = 'outputs'
 destination_root = 'outputs'
-file_name = 'test_results_extr_window60_latent_dim5_pattern_size15.csv'
+file_name = 'test_results_extr_window15_latent_dim5_pattern_size20.csv'
 # file_name = 'test_results.csv'
 
 
@@ -44,8 +44,8 @@ def displot_plotting(data, pattern_list):
         sns.displot(df_pattern["distance"]).set(title=f'pattern = {j[0]}')
         plt.show()
         # print(filtered_df)
-list_of_patterns = num_patterns.index.to_list()
-displot_plotting(df, list_of_patterns)
+# list_of_patterns = num_patterns.index.to_list()
+# displot_plotting(df, list_of_patterns)
 
 
 def extend_plotting(data, tresh_list, pattern_list):
@@ -67,13 +67,13 @@ def extend_plotting(data, tresh_list, pattern_list):
 
 
 #  Покажем все распозненные паттерны
-for treshholg in [1, 0.8, 0.4, 0.2, 0.1, 0.01]:
-    list_of_trashholds = [treshholg for _ in range(num_patterns.index.shape[0])]
-    list_of_patterns = num_patterns.index.to_list()
-    extend_plotting(df, list_of_trashholds, list_of_patterns)
+# for treshholg in [1, 0.8, 0.4, 0.2, 0.1, 0.01]:
+#     list_of_trashholds = [treshholg for _ in range(num_patterns.index.shape[0])]
+#     list_of_patterns = num_patterns.index.to_list()
+#     extend_plotting(df, list_of_trashholds, list_of_patterns)
 
 
 # покажем конкретный паттерн
-list_of_trashholds = [0.104]
-list_of_patterns = [53]
+list_of_trashholds = [100, 100]
+list_of_patterns = [112, 103]
 extend_plotting(df, list_of_trashholds, list_of_patterns)
