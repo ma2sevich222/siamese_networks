@@ -9,7 +9,7 @@ Created on Wed Feb  9 16:36:25 2022
 """"""""""""""""""""""""""""" Parameters Block """""""""""""""""""""""""""
 SOURCE_ROOT = "source_root/1min"
 DESTINATION_ROOT = "outputs"
-FILENAME = "VZ_1_Minute_(with indicators).txt"
+FILENAME = "TSLA_1_Minute_(with_indicators).txt"
 # out_filename ='test_results.csv'
 # buy_patterns_save = 'buy_patterns.txt'
 eval_dates_save = 'eval_dates.txt'
@@ -31,4 +31,4 @@ START_TRAIN = "2021-06-01 09:00:00"
 END_TRAIN = "2021-07-31 23:00:00"
 """Для тестирования модели"""
 START_TEST = "2021-08-01 09:00:00"
-END_TEST = "2021-12-31 23:00:00"  # last date is 2021-08-26 16:00:00
+END_TEST = "2021-08-26 16:00:00"  # last date is 2021-08-26 16:00:00

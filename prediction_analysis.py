@@ -43,7 +43,7 @@ def extend_plotting(data, tresh_list, pattern_list):
         filtered_df.append(sample_df)
 
         df_pattern = df[(df.pattern == j)]
-        sns.distplot(df_pattern["distance"])
+        sns.displot(df_pattern["distance"])
         plt.title(f'pattern = {j}:\n'
                   f'min distance = {np.round(df_pattern["distance"].min(), 4)},   '
                   f'max distance = {np.round(df_pattern["distance"].max(), 4)}')
@@ -65,6 +65,7 @@ def extend_plotting(data, tresh_list, pattern_list):
 list_of_trashholds = [0.99 for _ in range(num_patterns.index.shape[0])]
 list_of_patterns = num_patterns.index.to_list()
 extend_plotting(df, list_of_trashholds, list_of_patterns)
+exit()
 
 # покажем конкретный паттерн
 list_of_trashholds = [100]

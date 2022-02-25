@@ -32,9 +32,7 @@ model_name = (base_model.__class__.__name__)
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 """"""""""""""""""""""""""""" Main Block """""""""""""""""""""""""""""""""
-indices = [
-    i for i, x in enumerate(FILENAME) if x == "_"
-]  # находим индексы вхождения '_'
+indices = [i for i, x in enumerate(FILENAME) if x == "_"]  # находим индексы вхождения '_'
 ticker = FILENAME[: indices[0]]
 
 """Загрузка и подготовка данных"""
@@ -59,7 +57,7 @@ buy_patern, sell_patern = get_patterns(
 )
 
 buy_reshaped = buy_patern.reshape(buy_patern.shape[0], -1)
-np.savetxt(f"{DESTINATION_ROOT}/buy_patterns_extr_window{EXTR_WINDOW}"
+np.savetxt(f"{DESTINATION_ROOT}/{ticker}_buy_patterns_extr_window{EXTR_WINDOW}"
            f"_pattern_size{PATTERN_SIZE}.csv", buy_reshaped)
 
 print(f"Найдено уникальных:\n"
@@ -70,10 +68,9 @@ Xtrain, Ytrain = get_train_samples(buy_patern, sell_patern)
 """Нормализуем Xtrain"""
 X_norm = [normalize(i, axis=0, norm="max") for i in Xtrain]
 """решейпим для подачи в сеть"""
-X_norm = np.array(X_norm).reshape(
-    -1, buy_patern[0].shape[0], buy_patern[0][0].shape[0], 1
-)
+X_norm = np.array(X_norm).reshape(-1, buy_patern[0].shape[0], buy_patern[0][0].shape[0], 1)
 Ytrain = Ytrain.reshape(-1, 1)
+
 
 """ Получаем пары """
 digit_indices = [np.where(Ytrain == i)[0] for i in range(num_classes)]
@@ -91,8 +88,8 @@ cos_crit = torch.nn.CosineEmbeddingLoss(margin=margin)
 
 train_net(cos_crit, lr, epochs, my_dataloader, net, labels_1d=False)  # crit, lr, epochs, my_dataloader,net,
 
-"""Тест модели"""
 
+"""Тест модели"""
 eval_array = Eval_df.to_numpy()
 eval_samples = [eval_array[i - PATTERN_SIZE:i] for i in range(len(eval_array)) if i - PATTERN_SIZE >= 0]
 eval_normlzd = [normalize(i, axis=0, norm='max') for i in eval_samples]
@@ -144,5 +141,5 @@ Predictions = pd.DataFrame(
     list(zip(date, open, high, low, close, volume, signal, Min_prediction_pattern_name, distance)),
     columns=['date', 'open', 'high', 'low', 'close', 'volume', 'signal', 'pattern', 'distance'])
 
-Predictions.to_csv(f'{DESTINATION_ROOT}/test_results_extr_window{EXTR_WINDOW}'
+Predictions.to_csv(f'{DESTINATION_ROOT}/{ticker}_test_results_extr_window{EXTR_WINDOW}'
                    f'_pattern_size{PATTERN_SIZE}_{model_name}.csv')
