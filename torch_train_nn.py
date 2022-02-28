@@ -7,8 +7,8 @@ from torch.utils.data import TensorDataset, DataLoader
 from tqdm import tqdm
 import random
 
-from all_pytorch.torch_functions_for_train import train_net, cos_em_create_pairs
-from all_pytorch.torch_models import SiameseNetwork_extend, ContrastiveLoss, SiameseNetwork
+from utilits.torch_functions_for_train import train_net, cos_em_create_pairs
+from models.torch_models import ContrastiveLoss, SiameseNetwork
 from utilits.data_load import data_load
 from utilits.functions_for_train_nn import get_locals, get_patterns, get_train_samples
 
