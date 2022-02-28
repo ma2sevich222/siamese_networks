@@ -5,9 +5,10 @@ import torchvision.models as models
 from sklearn.preprocessing import normalize
 from torch.utils.data import TensorDataset, DataLoader
 from tqdm import tqdm
+import random
 
 from all_pytorch.torch_functions_for_train import train_net, cos_em_create_pairs
-from all_pytorch.torch_models import SiameseNetwork_extend
+from all_pytorch.torch_models import SiameseNetwork_extend, ContrastiveLoss, SiameseNetwork
 from utilits.data_load import data_load
 from utilits.functions_for_train_nn import get_locals, get_patterns, get_train_samples
 
@@ -15,11 +16,19 @@ from utilits.functions_for_train_nn import get_locals, get_patterns, get_train_s
 """"""""""""""""""""""""""""" Parameters Block """""""""""""""""""""""""""
 from constants import *
 
-epochs = 100
+epochs = 150
 lr = 0.0005
-latent_dim = 10
-margin = 0.5
+embedding_dim = 10
+margin = 1
 batch_size = 10
+
+seed = 3
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+
 
 """ Добавляем предобученную модель из модуля torchvision.models.
 Переходим по ссылке https://pytorch.org/vision/stable/models.html,
@@ -27,12 +36,14 @@ batch_size = 10
 base_model = models.< название модели из документации >(pretrained=True)
  На данный момент доступны: resnet18 , resnet50 , shufflenet_v2_x1_0 , mnasnet1_0 """
 
-base_model = models.mnasnet1_0(pretrained=True)
+base_model = models.resnet18()
 model_name = (base_model.__class__.__name__)
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 """"""""""""""""""""""""""""" Main Block """""""""""""""""""""""""""""""""
-indices = [i for i, x in enumerate(FILENAME) if x == "_"]  # находим индексы вхождения '_'
+indices = [
+    i for i, x in enumerate(FILENAME) if x == "_"
+]  # находим индексы вхождения '_'
 ticker = FILENAME[: indices[0]]
 
 """Загрузка и подготовка данных"""
@@ -57,7 +68,7 @@ buy_patern, sell_patern = get_patterns(
 )
 
 buy_reshaped = buy_patern.reshape(buy_patern.shape[0], -1)
-np.savetxt(f"{DESTINATION_ROOT}/{ticker}_buy_patterns_extr_window{EXTR_WINDOW}"
+np.savetxt(f"{DESTINATION_ROOT}/buy_patterns_extr_window{EXTR_WINDOW}"
            f"_pattern_size{PATTERN_SIZE}.csv", buy_reshaped)
 
 print(f"Найдено уникальных:\n"
@@ -68,9 +79,10 @@ Xtrain, Ytrain = get_train_samples(buy_patern, sell_patern)
 """Нормализуем Xtrain"""
 X_norm = [normalize(i, axis=0, norm="max") for i in Xtrain]
 """решейпим для подачи в сеть"""
-X_norm = np.array(X_norm).reshape(-1, buy_patern[0].shape[0], buy_patern[0][0].shape[0], 1)
+X_norm = np.array(X_norm).reshape(
+    -1, buy_patern[0].shape[0], buy_patern[0][0].shape[0], 1
+)
 Ytrain = Ytrain.reshape(-1, 1)
-
 
 """ Получаем пары """
 digit_indices = [np.where(Ytrain == i)[0] for i in range(num_classes)]
@@ -83,13 +95,14 @@ tensor_y = torch.Tensor(tr_y)
 my_dataset = TensorDataset(tensor_x1, tensor_x2, tensor_y)  # create your datset
 my_dataloader = DataLoader(my_dataset, batch_size=batch_size)
 
-net = SiameseNetwork_extend(base_model, embeddig_dim=latent_dim).cuda()
+net = SiameseNetwork(embedding_dim=embedding_dim).cuda()
 cos_crit = torch.nn.CosineEmbeddingLoss(margin=margin)
+сontrastive_crit = ContrastiveLoss()
 
 train_net(cos_crit, lr, epochs, my_dataloader, net, labels_1d=False)  # crit, lr, epochs, my_dataloader,net,
 
-
 """Тест модели"""
+
 eval_array = Eval_df.to_numpy()
 eval_samples = [eval_array[i - PATTERN_SIZE:i] for i in range(len(eval_array)) if i - PATTERN_SIZE >= 0]
 eval_normlzd = [normalize(i, axis=0, norm='max') for i in eval_samples]
@@ -106,9 +119,10 @@ distance = []
 signal = []  # лэйбл
 k = 0
 
+
 net.eval()
 with torch.no_grad():
-    for indexI, eval_arr in enumerate(tqdm(eval_normlzd)):
+    for indexI, eval_arr in enumerate(tqdm(eval_normlzd[:1000])):
 
         buy_predictions = []
         for buy in buy_patern:
@@ -132,7 +146,7 @@ with torch.no_grad():
         buy_pred = max(buy_predictions)
         distance.append(float(buy_pred))
 
-        if buy_pred >= 0.9:
+        if buy_pred <= 0.5:
             signal.append(1)
         else:
             signal.append(0)
@@ -141,5 +155,5 @@ Predictions = pd.DataFrame(
     list(zip(date, open, high, low, close, volume, signal, Min_prediction_pattern_name, distance)),
     columns=['date', 'open', 'high', 'low', 'close', 'volume', 'signal', 'pattern', 'distance'])
 
-Predictions.to_csv(f'{DESTINATION_ROOT}/{ticker}_test_results_extr_window{EXTR_WINDOW}'
+Predictions.to_csv(f'{DESTINATION_ROOT}/test_results_extr_window{EXTR_WINDOW}'
                    f'_pattern_size{PATTERN_SIZE}_{model_name}.csv')

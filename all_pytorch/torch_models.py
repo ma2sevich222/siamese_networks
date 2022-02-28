@@ -1,10 +1,12 @@
 import torch.nn as nn
+import torch
+import torch.nn.functional as F
 
 
 # create the Siamese Neural Network
 class SiameseNetwork(nn.Module):
 
-    def __init__(self, embeddig_dim=2):
+    def __init__(self, embedding_dim=2):
         super(SiameseNetwork, self).__init__()
 
         # Setting up the Sequential of CNN Layers
@@ -17,7 +19,7 @@ class SiameseNetwork(nn.Module):
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2, stride=1),
 
-            nn.Conv2d(256, 384, kernel_size=2, stride=1),
+            nn.Conv2d(256, 256, kernel_size=2, stride=1),
             nn.ReLU(inplace=True)
 
         )
@@ -30,7 +32,7 @@ class SiameseNetwork(nn.Module):
             nn.Linear(256, 126),
             nn.ReLU(inplace=True),
 
-            nn.Linear(126, embeddig_dim)
+            nn.Linear(126, embedding_dim)
         )
 
     def forward_once(self, x):
@@ -56,7 +58,7 @@ class SiameseNetwork_extend(nn.Module):
         super(SiameseNetwork_extend, self).__init__()
 
         self.cnn1 = nn.Sequential(
-            nn.Conv2d(1, 3, kernel_size=2, stride=1),
+            nn.ConvTranspose2d(1, 3, kernel_size=10, stride=1),
             nn.ReLU(inplace=True))
         self.model = base_model
 
@@ -87,3 +89,19 @@ class SiameseNetwork_extend(nn.Module):
         output2 = self.forward_once(input2)
 
         return output1, output2
+
+
+class ContrastiveLoss(torch.nn.Module):
+    def __init__(self, margin=2.0):
+        super(ContrastiveLoss, self).__init__()
+        self.margin = margin
+
+    def forward(self, output1, output2, label):
+      # Calculate the euclidian distance and calculate the contrastive loss
+      euclidean_distance = F.pairwise_distance(output1, output2, keepdim=True)
+
+      loss_contrastive = torch.mean((1-label) * torch.pow(euclidean_distance, 2) +
+                                    (label) * torch.pow(torch.clamp(self.margin - euclidean_distance, min=0.0), 2))
+
+
+      return loss_contrastive

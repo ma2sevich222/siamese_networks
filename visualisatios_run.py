@@ -14,9 +14,9 @@ from utilits.data_load import data_load
 pio.renderers.default = "browser"
 
 
-patterns_file_name = 'buy_patterns_extr_window60_pattern_size15.csv'
-results_file_name = 'test_results_extr_window60_pattern_size15.csv'
-pattern_num = 98  # номер паспознаваемого паттерна
+patterns_file_name = 'buy_patterns_extr_window60_pattern_size20.csv'
+results_file_name = 'test_results_extr_window60_pattern_size20_ResNet.csv'
+pattern_num = 24  # номер паспознаваемого паттерна
 
 # загрузка данных, которые использовались для обучение и теста модели
 Train_df, Eval_df, Eval_dates_str = data_load(SOURCE_ROOT, FILENAME)

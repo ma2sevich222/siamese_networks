@@ -4,7 +4,7 @@ import numpy as np
 import plotly.graph_objects as go
 from matplotlib import pyplot as plt
 import seaborn as sns
-
+from constants import *
 from constants import TRESHHOLD_DISTANCE
 
 pd.pandas.set_option('display.max_columns', None)
@@ -14,7 +14,7 @@ pd.set_option("precision", 2)
 
 source_root = 'outputs'
 destination_root = 'outputs'
-file_name = 'test_results_extr_window60_pattern_size15.csv'
+file_name = 'test_results_extr_window60_pattern_size20_ResNet.csv'
 # file_name = 'test_results.csv'
 
 
@@ -65,9 +65,9 @@ def extend_plotting(data, tresh_list, pattern_list):
 list_of_trashholds = [0.99 for _ in range(num_patterns.index.shape[0])]
 list_of_patterns = num_patterns.index.to_list()
 extend_plotting(df, list_of_trashholds, list_of_patterns)
-exit()
 
-# покажем конкретный паттерн
-list_of_trashholds = [100]
-list_of_patterns = [129]
+
+ # покажем конкретный паттерн
+list_of_trashholds = [0.99995]
+list_of_patterns = [25]
 extend_plotting(df, list_of_trashholds, list_of_patterns)

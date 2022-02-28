@@ -20,7 +20,7 @@ train_data_df = 'train_df.csv'
 TRESHHOLD_DISTANCE = 100
 num_classes = 2
 EXTR_WINDOW = 60  # то, на каком окне слева и вправо алгоритм размечает экстремумы
-PATTERN_SIZE = 15  # размер паттерна
+PATTERN_SIZE = 20  # размер паттерна
 
 
 """Для обучения модели"""
