@@ -1,9 +1,8 @@
-#######################################################
+##################################################################################
 # Copyright © 2021-2099 Ekosphere. All rights reserved
 # Author: Evgeny Matusevich
 # Contacts: <ma2sevich222@gmail.com>
-# File: train_test.py
-#######################################################
+##################################################################################
 
 
 import numpy as np
@@ -17,8 +16,8 @@ from tqdm import tqdm
 from constants import SOURCE_ROOT, DESTINATION_ROOT, FILENAME, START_TEST, END_TEST, EXTR_WINDOW, PATTERN_SIZE, OVERLAP, \
     profit_value, TRAIN_WINDOW
 from models.torch_models import shotSiameseNetwork
-from utilits.data_load import data_load_OHLCV
-from utilits.project_functions import get_train_data, get_triplet_random, train_triplet_net
+from utilits.data_load import data_load_OHLCV, data_load_CL
+from utilits.project_functions import get_train_data, get_triplet_random, train_triplet_net, get_CLtrain_data
 
 torch.cuda.empty_cache()
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -55,7 +54,7 @@ train_x, n_samples_to_train = get_train_data(Train_df, profit_value, EXTR_WINDOW
                                              train_dates)  # получаем данные для создания триплетов
 n_classes = len(train_x)
 # train_x = np.array(train_x, dtype=object)
-# print(test_dates.values[PATTERN_SIZE])
+#print(test_dates.values[PATTERN_SIZE])
 
 train_triplets = get_triplet_random(n_samples_to_train, n_classes, train_x)
 
@@ -125,6 +124,5 @@ with torch.no_grad():
 Predictions = pd.DataFrame(
     {'Datetime': date, 'Open': open, 'High': high, 'Low': low, 'Close': close, 'Volume': volume, 'Distance': buy_pred,
      'Train_shape': train_data_shape})
-Predictions.to_csv(
-    f'{DESTINATION_ROOT}/test_results{FILENAME[:-4]}_extrw{EXTR_WINDOW}_patsize{PATTERN_SIZE}_ov{OVERLAP}.csv',
-    index=False)
+Predictions.to_csv(f'{DESTINATION_ROOT}/test_results{FILENAME[:-4]}_extrw{EXTR_WINDOW}_patsize{PATTERN_SIZE}_ov{OVERLAP}.csv',
+                   index=False)

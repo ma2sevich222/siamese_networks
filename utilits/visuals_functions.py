@@ -1,14 +1,3 @@
-#######################################################
-# Copyright © 2021-2099 Ekosphere. All rights reserved
-# Author: Evgeny Matusevich
-# Contacts: <ma2sevich222@gmail.com>
-# File: visuals_functions.py
-#######################################################
-
-
-
-
-
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 

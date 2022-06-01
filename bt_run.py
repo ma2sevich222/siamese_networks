@@ -1,9 +1,8 @@
-#######################################################
+##################################################################################
 # Copyright © 2021-2099 Ekosphere. All rights reserved
 # Author: Evgeny Matusevich
 # Contacts: <ma2sevich222@gmail.com>
-# File: bt_run.py
-#######################################################
+##################################################################################
 
 
 import backtesting._plotting as plt_backtesting
@@ -12,17 +11,37 @@ import pandas as pd
 import plotly.express as px
 import torch
 from backtesting import Backtest
+from sklearn.preprocessing import StandardScaler
 from torch.nn import functional as F
 from torch.utils.data import TensorDataset, DataLoader
-from tqdm import tqdm
-from sklearn.preprocessing import StandardScaler
+from tqdm import trange, tqdm
 from constants import SOURCE_ROOT, DESTINATION_ROOT, FILENAME, TRAIN_WINDOW, profit_value, START_TEST, END_TEST
 from models.torch_models import shotSiameseNetwork
 from utilits.data_load import data_load_OHLCV, data_load_CL
-from utilits.project_functions import get_triplet_random, train_triplet_net, get_train_data, get_CLtrain_data
+from utilits.project_functions import get_train_data, get_triplet_random, train_triplet_net, get_CLtrain_data
 # from utilits.strategies_Chekh import Long_n_Short_Strategy as LnS
 from utilits.strategies_AT import Long_n_Short_Strategy_Float as LnSF
 
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""" Data Parameters Block """""""""""""""""""""""""""
+
+'''SOURCE_ROOT = "source_root"
+DESTINATION_ROOT = "outputs"
+FILENAME = "GC_2020_2022_10min.csv"
+
+"""Основыен параметры"""
+# EXTR_WINDOW = 120  # то, на каком окне слева и вправо алгоритм размечает экстремумы
+# PATTERN_SIZE = 90  # размер паттерна
+# OVERLAP = 0  # сдвигаем паттерн на n шагов вперед от локального минимума
+profit_value = 0.003  # доля профита
+
+"""Для обучения модели"""
+START_TRAIN = "2020-01-02 00:30:00"
+END_TRAIN = "2020-11-19 10:30:00"
+"""Для тестирования модели"""
+START_TEST = "2021-03-25 00:00:00"
+END_TEST = "2022-04-01 20:30:00"  # last 2022-02-01 14:15:00
+TRAIN_WINDOW = 10000  # количество баров для тренировки'''
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 """"""""""""""""""""""""""""" Net Parameters Block """""""""""""""""""""""""""
@@ -36,20 +55,16 @@ distance_function = lambda x, y: 1.0 - F.cosine_similarity(x, y)
 result_filename = f'{DESTINATION_ROOT}/bt_run_outputs/hyp_parameters_select_{FILENAME[:-4]}_step'
 df_stats_list = []
 runs = 0
-for PATTERN_SIZE in tqdm(range(50, 60, 10), desc=" Прогресс подбора "):
+for PATTERN_SIZE in tqdm(range(600, 2000, 100), desc =" Прогресс подбора "):
     runs += 0
-    for EXTR_WINDOW in range(100, 110, 10):
-        for OVERLAP in range(0, 10, 10):
-            print(
-                '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
-            print(
-                f'Начало тестирования для параметров PATTERN_SIZE = {PATTERN_SIZE}, EXTR_WINDOW = {EXTR_WINDOW}, OVERLAP = {OVERLAP} ')
-            print(
-                '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
-            Train_df, Eval_df, train_dates, test_dates = data_load_OHLCV(SOURCE_ROOT, FILENAME, START_TEST, END_TEST,
-                                                                      PATTERN_SIZE, TRAIN_WINDOW)  # загрузка данных
-            train_x, n_samples_to_train = get_train_data(Train_df, profit_value, EXTR_WINDOW, PATTERN_SIZE, OVERLAP,
-                                                           train_dates)  # получаем данные для создания триплетов
+    for EXTR_WINDOW in range(300, 1000, 100):
+        for OVERLAP in range(0, 300, 50):
+            print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+            print(f'Начало тестирования для параметров PATTERN_SIZE = {PATTERN_SIZE}, EXTR_WINDOW = {EXTR_WINDOW}, OVERLAP = {OVERLAP} ')
+            print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+            Train_df, Eval_df, train_dates, test_dates = data_load_CL(SOURCE_ROOT, FILENAME, START_TEST, END_TEST, PATTERN_SIZE, TRAIN_WINDOW)  # загрузка данных
+            train_x, n_samples_to_train = get_CLtrain_data(Train_df, profit_value, EXTR_WINDOW, PATTERN_SIZE, OVERLAP,
+                                                         train_dates)  # получаем данные для создания триплетов
             n_classes = len(train_x)
 
             print(f'Дата начала тестирования : {test_dates.values[PATTERN_SIZE - 1]}')
@@ -73,16 +88,16 @@ for PATTERN_SIZE in tqdm(range(50, 60, 10), desc=" Прогресс подбор
 
             """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
             """"""""""""""""""""""""""""" Test data prepare  """""""""""""""""""""""""""
-            scaler = StandardScaler()
+            '''scaler = StandardScaler()
             eval_array = Eval_df.to_numpy()
             eval_samples = [eval_array[i - PATTERN_SIZE:i] for i in range(len(eval_array)) if i - PATTERN_SIZE >= 0]
             eval_normlzd = [scaler.fit_transform(i) for i in eval_samples]
-            eval_normlzd = np.array(eval_normlzd).reshape(-1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1)
-            '''eval_array = Eval_df[
+            eval_normlzd = np.array(eval_normlzd).reshape(-1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1)'''
+            eval_array = Eval_df[
                 ['DiffEMA', 'SmoothDiffEMA', 'VolatilityTunnel', 'BuyIntense', 'SellIntense']].to_numpy()
             eval_samples = [eval_array[i - PATTERN_SIZE:i] for i in range(len(eval_array)) if i - PATTERN_SIZE >= 0]
             eval_ohlcv = Eval_df[['Open', 'High', 'Low', 'Close', 'Volume']].to_numpy()
-            ohlcv_samples = [eval_ohlcv[i - PATTERN_SIZE:i] for i in range(len(eval_ohlcv)) if i - PATTERN_SIZE >= 0]'''
+            ohlcv_samples = [eval_ohlcv[i - PATTERN_SIZE:i] for i in range(len(eval_ohlcv)) if i - PATTERN_SIZE >= 0]
             """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
             """"""""""""""""""""""""""""" Test model  """""""""""""""""""""""""""
 
@@ -97,7 +112,7 @@ for PATTERN_SIZE in tqdm(range(50, 60, 10), desc=" Прогресс подбор
 
             net.eval()
             with torch.no_grad():
-                for indexI, eval_arr in enumerate(eval_normlzd):
+                for indexI, eval_arr in enumerate(eval_samples):
                     anchor = train_x[0][0].reshape(1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1)
                     eval_arr_r = eval_arr.reshape(1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1)
                     anchor = torch.Tensor(anchor)
@@ -109,11 +124,11 @@ for PATTERN_SIZE in tqdm(range(50, 60, 10), desc=" Прогресс подбор
                     buy_pred.append(float(net_pred.to('cpu').numpy()))
 
                     date.append(test_dates.Datetime[indexI + (PATTERN_SIZE - 1)])
-                    open.append(float(eval_samples[indexI][-1, [0]]))
-                    high.append(float(eval_samples[indexI][-1, [1]]))
-                    low.append(float(eval_samples[indexI][-1, [2]]))
-                    close.append(float(eval_samples[indexI][-1, [3]]))
-                    volume.append(float(eval_samples[indexI][-1, [4]]))
+                    open.append(float(ohlcv_samples[indexI][-1, [0]]))
+                    high.append(float(ohlcv_samples[indexI][-1, [1]]))
+                    low.append(float(ohlcv_samples[indexI][-1, [2]]))
+                    close.append(float(ohlcv_samples[indexI][-1, [3]]))
+                    volume.append(float(ohlcv_samples[indexI][-1, [4]]))
                     train_data_shape.append(float(Train_df.shape[0]))
 
             df = pd.DataFrame(
@@ -196,11 +211,11 @@ for PATTERN_SIZE in tqdm(range(50, 60, 10), desc=" Прогресс подбор
             df_stats_list.append(df_stats)
 
     if runs == 0:
-        df_hyp_parameters = pd.concat(df_stats_list, ignore_index=True, sort=False)
-        df_hyp_parameters.sort_values(by="Net Profit [$]", ascending=False).to_excel(
-            f'{result_filename}_intermedia.xlsx')
-        runs = 0
-        print('<<<<<<<<<<<< Промежуеточный файл сохранен >>>>>>>>>>>>>>')
+      df_hyp_parameters = pd.concat(df_stats_list, ignore_index=True, sort=False)
+      df_hyp_parameters.sort_values(by="Net Profit [$]", ascending=False).to_excel(f'{result_filename}_intermedia.xlsx')
+      runs = 0
+      print('<<<<<<<<<<<< Промежуеточный файл сохранен >>>>>>>>>>>>>>')
+
 
 df_hyp_parameters = pd.concat(df_stats_list, ignore_index=True, sort=False)
 df_hyp_parameters.sort_values(by="Net Profit [$]", ascending=False).to_excel(f'{result_filename}.xlsx')

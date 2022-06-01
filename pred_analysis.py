@@ -1,12 +1,11 @@
-#######################################################
+
+##################################################################################
 # Copyright © 2021-2099 Ekosphere. All rights reserved
 # Author: Evgeny Matusevich
 # Contacts: <ma2sevich222@gmail.com>
-# File: pred_analysis.py
-#######################################################
+##################################################################################
 
 import pandas as pd
-
 from utilits.visuals_functions import plot_prediction
 
 pd.pandas.set_option('display.max_columns', None)

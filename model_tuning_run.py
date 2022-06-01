@@ -1,9 +1,10 @@
-#######################################################
+
+
+##################################################################################
 # Copyright © 2021-2099 Ekosphere. All rights reserved
 # Author: Evgeny Matusevich
 # Contacts: <ma2sevich222@gmail.com>
-# File: model_tuning_run.py
-#######################################################
+##################################################################################
 
 import numpy as np
 import pandas as pd
@@ -14,7 +15,7 @@ from torch.utils.data import TensorDataset, DataLoader
 from tqdm import tqdm
 from constants import *
 from models.torch_models import SiameseNetwork
-from utilits.project_functions import get_train_data, get_triplet_random, train_triplet_net, euclid_dist
+from utilits.project_functions import unstandart_data_load, get_train_data, get_triplet_random, train_triplet_net, euclid_dist
 import optuna
 from utilits.data_load import data_load_OHLCV
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -23,7 +24,7 @@ from utilits.data_load import data_load_OHLCV
 profit_value = 0.0015
 epochs = 100  # количество эпох
 lr = 0.0009470240447408595  # learnig rate
-embedding_dim = 160  # размер скрытого пространства
+embedding_dim = 165  # размер скрытого пространства
 margin = 2  # маржа для лосс функции
 batch_size = 100  # размер батчсайз
 # = 1000  # Количество триплетов для тренировки
@@ -31,10 +32,10 @@ tresh_hold = 15  # граница предсказаний ниже которо
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 """"""""""""""""""""""""""""" Distance functions """""""""""""""""""""""""""
-distance_function = lambda x, y: 1.0 - F.cosine_similarity(x, y)  # функция расчета расстояния для триплет лосс
+#distance_function = lambda x, y: 1.0 - F.cosine_similarity(x, y)  # функция расчета расстояния для триплет лосс
 # distance_function = PairwiseDistance(p=2, eps=1e-06,)
 # distance_function = l_infinity
-#distance_function = euclid_dist
+distance_function = euclid_dist
 # distance_function = manhatten_dist
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

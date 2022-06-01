@@ -1,14 +1,12 @@
-#######################################################
-# Copyright © 2021-2099 Ekosphere. All rights reserved
-# Author: Evgeny Matusevich
-# Contacts: <ma2sevich222@gmail.com>
-# File: data_load.py
-#######################################################
 import pandas as pd
+
+
+
 
 pd.pandas.set_option("display.max_columns", None)
 pd.set_option("expand_frame_repr", False)
 pd.set_option("precision", 2)
+
 
 '''def data_load(SOURCE_ROOT, FILENAME):
     df = pd.read_csv(f"{SOURCE_ROOT}/{FILENAME}")
@@ -82,9 +80,12 @@ def data_load_OHLCV(SOURCE_ROOT, FILENAME, START_TEST, END_TEST, PATTERN_SIZE, T
     # print(start_test_index, end_train_index, start_train_index)
 
     START_TEST_upd = df.loc[start_test_index, 'Datetime'].item()
-    END_TRAIN = df.loc[end_train_index, 'Datetime'].item()
+    END_TRAIN = df.loc[
+        end_train_index, 'Datetime'].item()
     START_TRAIN = df.loc[start_train_index, 'Datetime'].item()
     df.Datetime = pd.to_datetime(df.Datetime)
+
+
 
     # df.dropna(axis=0, inplace=True)  # Удаляем наниты
     # df["Datetime"] = df["Date"]
@@ -113,7 +114,7 @@ def data_load_OHLCV(SOURCE_ROOT, FILENAME, START_TEST, END_TEST, PATTERN_SIZE, T
     # Eval_dates_str = [str(i) for i in Eval_dates]
     print('********* Данные для обучения *********')
     print(Train_df.head())
-    print('********* Данные для тестирования *********')
+    print ('********* Данные для тестирования *********')
     print(Eval_df.head())
 
     return Train_df, Eval_df, Train_dates, Eval_dates
@@ -169,7 +170,7 @@ def convert_time(seconds):
 
 
 def data_load_CL(SOURCE_ROOT, FILENAME, START_TEST, END_TEST, PATTERN_SIZE, TRAIN_WINDOW):
-    # df = pd.read_csv(f"{SOURCE_ROOT}/{FILENAME}")
+    #df = pd.read_csv(f"{SOURCE_ROOT}/{FILENAME}")
     df = pd.read_csv(f"{SOURCE_ROOT}/{FILENAME}", sep=';')
     df = df[~df.Datetime.duplicated(keep='first')]
     df.reset_index(drop=True, inplace=True)
@@ -187,34 +188,38 @@ def data_load_CL(SOURCE_ROOT, FILENAME, START_TEST, END_TEST, PATTERN_SIZE, TRAI
     # df.rename(columns=lambda x: x.replace("<", ""), inplace=True)
     # df.rename(columns=lambda x: x.replace(" ", ""), inplace=True)
     # del df["ZeroLine"]
-    # columns = df.columns.tolist()
+    #columns = df.columns.tolist()
     """Формат даты в Datetime"""
     # new_df = df["Date"].str.split(".", expand=True)
     # df["Date"] = new_df[2] + "-" + new_df[1] + "-" + new_df[0] + " " + df["Time"]
     df['Datetime'] = pd.to_datetime(df['Datetime'], format='%d.%m.%Y %H:%M:%S')
-    print(df.iloc[25, 0])
+    print(df.iloc[25,0])
     print(df['Datetime'])
     print(df.index[df['Datetime'] == '2022-05-06 12:37:23'])
     start_test_index = df.index[df['Datetime'] == START_TEST] - PATTERN_SIZE + 1
     end_train_index = df.index[df['Datetime'] == START_TEST] - PATTERN_SIZE
     start_train_index = df.index[df['Datetime'] == START_TEST] - PATTERN_SIZE - TRAIN_WINDOW + 1
-    # df['Datetime'] = pd.to_datetime(df['Datetime'], infer_datetime_format=True)  #infer_datetime_format=True
+    #df['Datetime'] = pd.to_datetime(df['Datetime'], infer_datetime_format=True)  #infer_datetime_format=True
 
     # print(start_test_index, end_train_index, start_train_index)
 
     START_TEST_upd = df.loc[start_test_index, 'Datetime'].item()
-    END_TRAIN = df.loc[end_train_index, 'Datetime'].item()
+    END_TRAIN = df.loc[
+        end_train_index, 'Datetime'].item()
     START_TRAIN = df.loc[start_train_index, 'Datetime'].item()
-    # df.Datetime = pd.to_datetime(df.Datetime, infer_datetime_format=True)
+    #df.Datetime = pd.to_datetime(df.Datetime, infer_datetime_format=True)
     (print(START_TRAIN))
     (print(END_TRAIN))
     (print(START_TEST_upd))
     (print(END_TEST))
 
+
+
+
     # df.dropna(axis=0, inplace=True)  # Удаляем наниты
     # df["Datetime"] = df["Date"]
     df.set_index("Datetime", inplace=True)
-    # df = df[~df.index.duplicated(keep='first')]
+    #df = df[~df.index.duplicated(keep='first')]
     df.sort_index(ascending=True, inplace=False)
     df_duplicated = df[df.index.duplicated(keep=False)].sort_index()  # проверка дубликатов
     assert df_duplicated.shape[0] == 0, "В коде существуют дубликаты!"
@@ -232,7 +237,8 @@ def data_load_CL(SOURCE_ROOT, FILENAME, START_TEST, END_TEST, PATTERN_SIZE, TRAI
     """Сохраняем даты, удаляем из основынх датафрэймов"""
     Train_dates = pd.DataFrame({'Datetime': Train_df.index.values})
     Eval_dates = pd.DataFrame({'Datetime': Eval_df.index.values})
-    # Eval_dates['Datetime'] = pd.to_datetime(Eval_dates['Datetime'], format='%Y%m%d%H%M%S')
+    #Eval_dates['Datetime'] = pd.to_datetime(Eval_dates['Datetime'], format='%Y%m%d%H%M%S')
+
 
     Train_df = Train_df.reset_index(drop=True)
     Eval_df = Eval_df.reset_index(drop=True)
@@ -243,7 +249,13 @@ def data_load_CL(SOURCE_ROOT, FILENAME, START_TEST, END_TEST, PATTERN_SIZE, TRAI
     # Eval_dates_str = [str(i) for i in Eval_dates]
     print('********* Данные для обучения *********')
     print(Train_df.head())
-    print('********* Данные для тестирования *********')
+    print ('********* Данные для тестирования *********')
     print(Eval_df.head())
 
+
+
     return Train_df, Eval_df, Train_dates, Eval_dates
+
+
+
+

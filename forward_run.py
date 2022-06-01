@@ -1,38 +1,39 @@
-#######################################################
-# Copyright © 2021-2099 Ekosphere. All rights reserved
-# Author: Evgeny Matusevich
-# Contacts: <ma2sevich222@gmail.com>
-# File: model_tuning_run.py
-#######################################################
-
-
-import numpy as np
+import backtesting._plotting as plt_backtesting
 import numpy as np
 import pandas as pd
+import plotly.express as px
 import torch
+from backtesting import Backtest
 from sklearn.preprocessing import StandardScaler
 from torch.nn import functional as F
 from torch.utils.data import TensorDataset, DataLoader
-
+from tqdm import trange, tqdm
 from models.torch_models import shotSiameseNetwork
-from utilits.project_functions import get_train_data, get_triplet_random, train_triplet_net, forward_trade, \
-    find_best_dist, get_signals
-
+from utilits.data_load import data_load_OHLCV, data_load_CL
+from utilits.project_functions import get_train_data, get_triplet_random, train_triplet_net, get_CLtrain_data, forward_trade, find_best_dist, get_signals
 # from utilits.strategies_Chekh import Long_n_Short_Strategy as LnS
+from utilits.strategies_AT import Long_n_Short_Strategy_Float as LnSF
+
+
+
 
 
 """"""""""""""""""""""""""""" Parameters Block """""""""""""""""""""""""""
 source = 'source_root'
 out_root = 'outputs'
-source_file_name = 'GC_2020_2022_30min.csv'
+source_file_name ='GC_2020_2022_30min.csv'
 pattern_size = 143
-extr_window = 200
+extr_window  = 200
 overlap = 61
 profit_value = 0.003
+#n_splits = 1 # количество частей на которое делим датасет
 step = 0.01
+
 train_window = 7000
 select_dist_window = 7000
 forward_window = 1000
+
+
 
 """"""""""""""""""""""""""""" Net Parameters Block """""""""""""""""""""""""""
 epochs = 7  # количество эпох
@@ -42,9 +43,10 @@ margin = 20  # маржа для лосс функции
 batch_size = 150  # размер батчсайз
 distance_function = lambda x, y: 1.0 - F.cosine_similarity(x, y)
 
-df = pd.read_csv(f"{source}/{source_file_name}")  # Загрузка данных
 
-n_iters = (len(df) - sum([train_window, select_dist_window, forward_window])) // forward_window
+df = pd.read_csv(f"{source}/{source_file_name}") # Загрузка данных
+
+n_iters = (len(df) - sum([train_window, select_dist_window, forward_window ])) // forward_window
 print(f'********************** Количество итераций = {n_iters}*********************************')
 
 df_for_split = df.copy()
@@ -60,24 +62,21 @@ for i in range(n_splits):
 iteration = 0
 signals = []
 for n in range(n_iters):
-    # print(f'Размер среза {len(dat)}')
+    #print(f'Размер среза {len(dat)}')
     train_df = df_for_split.iloc[:train_window]
     test_df = df_for_split.iloc[train_window:sum([train_window, select_dist_window])]
-    forward_df = df_for_split.iloc[
-                 sum([train_window, select_dist_window]):sum([train_window, select_dist_window, forward_window])]
+    forward_df = df_for_split.iloc[sum([train_window, select_dist_window]):sum([train_window, select_dist_window, forward_window])]
     df_for_split = df_for_split.iloc[forward_window:]
     df_for_split = df_for_split.reset_index(drop=True)
 
+
     print('Новый срез')
     print(f'Размер обучающей выборки = {len(train_df)}')
-    print(
-        f"Период обучения с {train_df.loc[train_df.index[0], 'Datetime']} по {train_df.loc[train_df.index[-1], 'Datetime']}")
+    print(f"Период обучения с {train_df.loc[train_df.index[0],'Datetime']} по {train_df.loc[train_df.index[-1],'Datetime']}")
     print(f'Размер выборки для подбора расстояния = {len(test_df)}')
-    print(
-        f"Подбор расстояния с {test_df.loc[test_df.index[0], 'Datetime']} по {test_df.loc[test_df.index[-1], 'Datetime']}")
+    print(f"Подбор расстояния с {test_df.loc[test_df.index[0], 'Datetime']} по {test_df.loc[test_df.index[-1], 'Datetime']}")
     print(f'Размер выборки для форвардного анализа расстояния = {len(forward_df)}')
-    print(
-        f"Форвардный анализ с {forward_df.loc[forward_df.index[0], 'Datetime']} по {forward_df.loc[forward_df.index[-1], 'Datetime']}")
+    print(f"Форвардный анализ с {forward_df.loc[forward_df.index[0], 'Datetime']} по {forward_df.loc[forward_df.index[-1], 'Datetime']}")
     train_df = train_df.reset_index(drop=True)
     test_df = test_df.reset_index(drop=True)
     forward_df = forward_df.reset_index(drop=True)
@@ -87,7 +86,7 @@ for n in range(n_iters):
     del train_df["Datetime"], test_df["Datetime"], forward_df["Datetime"]
 
     train_x, n_samples_to_train = get_train_data(train_df, profit_value, extr_window, pattern_size, overlap,
-                                                 train_dates)  # получаем данные для создания триплетов
+                                                   train_dates)  # получаем данные для создания триплетов
 
     n_classes = len(train_x)
     train_triplets = get_triplet_random(n_samples_to_train, n_classes, train_x)
@@ -152,10 +151,15 @@ for n in range(n_iters):
          'Distance': buy_pred,
          'Train_shape': train_data_shape})
 
+
+
+
     buy_before, sell_after = find_best_dist(test_result, step)
+
 
     print(f'BUY BEFORE = {buy_before}')
     print(f'SELL AFTER = {sell_after}')
+
 
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     """"""""""""""""""""""""""""" Forward data prepare  """""""""""""""""""""""""""
@@ -203,11 +207,26 @@ for n in range(n_iters):
          'Distance': buy_pred,
          'Train_shape': train_data_shape})
 
-    signal = get_signals(forward_result, buy_before, sell_after)
+    signal = get_signals(forward_result,buy_before,sell_after)
     signals.append(signal)
-    iteration += 1
+    iteration +=1
     print(f'*************** Итерация No. = {iteration}  завершена')
+
 
 signals_combained = pd.concat(signals, ignore_index=True, sort=False)
 
+
 forward_trade(signals_combained, out_root, source_file_name, pattern_size, extr_window, overlap)
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -15,7 +15,6 @@ bt = Backtest(signals, Long_n_Short_Strategy, cash=1000000, commission=comm, tra
 """
 
 import math
-
 from backtesting import Strategy
 from loguru import logger
 
