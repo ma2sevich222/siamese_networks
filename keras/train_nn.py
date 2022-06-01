@@ -8,8 +8,18 @@ from sklearn.preprocessing import normalize
 from tensorflow.keras.layers import Input, Lambda
 from tensorflow.keras.models import Model
 
-from other_codes.old_project.old_utilits.functions_for_train_nn import get_locals, get_patterns, create_pairs, get_train_samples
-from other_codes.old_project.old_utilits.losses import euclid_dis, eucl_dist_output_shape, contrastive_loss, accuracy
+from other_codes.old_project.old_utilits.functions_for_train_nn import (
+    get_locals,
+    get_patterns,
+    create_pairs,
+    get_train_samples,
+)
+from other_codes.old_project.old_utilits.losses import (
+    euclid_dis,
+    eucl_dist_output_shape,
+    contrastive_loss,
+    accuracy,
+)
 from models.base_net import create_base_net
 import json
 
@@ -20,12 +30,12 @@ num_classes = 2
 
 source_root = "source_root/15min"
 destination_root = "outputs"
-model_name = 'Best_model'
+model_name = "Best_model"
 filename = "VZ_15_Minutes_(with_indicators).txt"
-out_filename ='test_results.csv'
-eval_dates_save = 'Eval_dates.txt'
-eval_data_df = 'Eval_df.csv'
-buy_patterns_save='buy_patterns.txt'
+out_filename = "test_results.csv"
+eval_dates_save = "Eval_dates.txt"
+eval_data_df = "Eval_df.csv"
+buy_patterns_save = "buy_patterns.txt"
 
 indices = [
     i for i, x in enumerate(filename) if x == "_"
@@ -76,10 +86,10 @@ Train_dates = Train_df.index.to_list()
 Eval_dates = Eval_df.index.astype(str)
 Train_df = Train_df.reset_index(drop=True)
 Eval_df = Eval_df.reset_index(drop=True)
-Eval_dates_str=[str(i) for i in Eval_dates]
-Eval_df.to_csv(f'{destination_root}/{eval_data_df}')
+Eval_dates_str = [str(i) for i in Eval_dates]
+Eval_df.to_csv(f"{destination_root}/{eval_data_df}")
 
-with open(f'{destination_root}/{eval_dates_save}', 'w') as f:
+with open(f"{destination_root}/{eval_dates_save}", "w") as f:
     f.write(json.dumps(Eval_dates_str))
 
 
@@ -91,9 +101,7 @@ n_size = 20  # размер мемори
 """Параметры обучения"""
 batch_size = 10
 epochs = 10
-treshhold = 0.05 #  граница уверености
-
-
+treshhold = 0.05  #  граница уверености
 
 
 Min_train_locals, Max_train__locals = get_locals(Train_df, extr_window)
@@ -106,14 +114,10 @@ buy_patern, sell_patern = get_patterns(
 )
 
 
-
-
 print(f"buy_patern.shape: {buy_patern.shape}\t|\sell_patern.shape: {sell_patern.shape}")
 
 buy_reshaped = buy_patern.reshape(buy_patern.shape[0], -1)
 np.savetxt(f"{destination_root}/{buy_patterns_save}", buy_reshaped)
-
-
 
 
 """Получаем Xtrain и Ytrain для обучения сети"""
@@ -148,10 +152,12 @@ distance = Lambda(euclid_dis, output_shape=eucl_dist_output_shape)(
 model = Model([input_a, input_b], distance)
 
 model.compile(loss=contrastive_loss, optimizer="adam", metrics=[accuracy])
-history=model.fit([tr_pairs[:, 0], tr_pairs[:, 1]], tr_y, batch_size=batch_size, epochs=epochs)
+history = model.fit(
+    [tr_pairs[:, 0], tr_pairs[:, 1]], tr_y, batch_size=batch_size, epochs=epochs
+)
 
-pd.DataFrame(history.history).plot(figsize=(8,5))
+pd.DataFrame(history.history).plot(figsize=(8, 5))
 plt.show()
 
 
-model.save(f'{destination_root}/{model_name}')
+model.save(f"{destination_root}/{model_name}")

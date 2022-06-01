@@ -1,5 +1,3 @@
-
-
 ##################################################################################
 # Copyright © 2021-2099 Ekosphere. All rights reserved
 # Author: Evgeny Matusevich
@@ -15,11 +13,18 @@ from torch.utils.data import TensorDataset, DataLoader
 from tqdm import tqdm
 from constants import *
 from models.torch_models import SiameseNetwork
-from utilits.project_functions import unstandart_data_load, get_train_data, get_triplet_random, train_triplet_net, euclid_dist
+from utilits.project_functions import (
+    unstandart_data_load,
+    get_train_data,
+    get_triplet_random,
+    train_triplet_net,
+    euclid_dist,
+)
 import optuna
 from utilits.data_load import data_load_OHLCV
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-""""""""""""""""""""""""""""" Parameters Block """""""""""""""""""""""""""
+
+"""""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
+"""""" """""" """""" """""" """"" Parameters Block """ """""" """""" """""" """"""
 
 profit_value = 0.0015
 epochs = 100  # количество эпох
@@ -28,27 +33,32 @@ embedding_dim = 165  # размер скрытого пространства
 margin = 2  # маржа для лосс функции
 batch_size = 100  # размер батчсайз
 # = 1000  # Количество триплетов для тренировки
-tresh_hold = 15  # граница предсказаний ниже которой предсказания будут отображаться на графике
+tresh_hold = (
+    15  # граница предсказаний ниже которой предсказания будут отображаться на графике
+)
 
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-""""""""""""""""""""""""""""" Distance functions """""""""""""""""""""""""""
-#distance_function = lambda x, y: 1.0 - F.cosine_similarity(x, y)  # функция расчета расстояния для триплет лосс
+"""""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
+"""""" """""" """""" """""" """"" Distance functions """ """""" """""" """""" """"""
+# distance_function = lambda x, y: 1.0 - F.cosine_similarity(x, y)  # функция расчета расстояния для триплет лосс
 # distance_function = PairwiseDistance(p=2, eps=1e-06,)
 # distance_function = l_infinity
 distance_function = euclid_dist
 # distance_function = manhatten_dist
 
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-""""""""""""""""""""""""""""" Data load,clean and prepare  """""""""""""""""""""""""""
+"""""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
+"""""" """""" """""" """""" """"" Data load,clean and prepare  """ """""" """""" """""" """"""
 
-'''indices = [
+"""indices = [
     i for i, x in enumerate(FILENAME) if x == "_"
 ]  # находим индексы вхождения '_'
-ticker = FILENAME[: indices[0]]'''
+ticker = FILENAME[: indices[0]]"""
 
-Train_df, Eval_df, train_dates, test_dates = data_load_OHLCV(SOURCE_ROOT, FILENAME)  # загрузка данных
-train_x, n_samples_to_train = get_train_data(Train_df, profit_value, EXTR_WINDOW, PATTERN_SIZE, OVERLAP,
-                         train_dates)  # получаем данные для создания триплетов
+Train_df, Eval_df, train_dates, test_dates = data_load_OHLCV(
+    SOURCE_ROOT, FILENAME
+)  # загрузка данных
+train_x, n_samples_to_train = get_train_data(
+    Train_df, profit_value, EXTR_WINDOW, PATTERN_SIZE, OVERLAP, train_dates
+)  # получаем данные для создания триплетов
 n_classes = len(train_x)
 train_x = np.array(train_x, dtype=object)
 
@@ -75,20 +85,18 @@ def objective(trial):
     # new_parameter =  trial.suggest_loguniform("new_parameter", lower_bound, upper_bound)
     tdistance_function = distance_function
     # create new model(and all parameters) every iteration
-    model = SiameseNetwork( embedding_dim=embedding_dim).cuda()
+    model = SiameseNetwork(embedding_dim=embedding_dim).cuda()
 
-
-
-    _, last_epoch_loss = train_triplet_net(lr, epochs, my_dataloader, model, tdistance_function)
+    _, last_epoch_loss = train_triplet_net(
+        lr, epochs, my_dataloader, model, tdistance_function
+    )
     return last_epoch_loss
-
 
 
 # Create "exploration"
 study = optuna.create_study(direction="minimize", study_name="Optimal lr")
 
 
-study.optimize(
-    objective, n_trials=10)
+study.optimize(objective, n_trials=10)
 
 print(study.best_params)

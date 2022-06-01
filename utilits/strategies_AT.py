@@ -28,30 +28,33 @@ class Long_n_Short_Strategy_Float(Strategy):
       'Длинные' и 'короткие' сделки.
 
       """
+
     fix_sum = 0
-    deal_amount = 'capital'
-    signal_signature = {'entry_signal': 1, 'exit_signal': -1}
+    deal_amount = "capital"
+    signal_signature = {"entry_signal": 1, "exit_signal": -1}
     preview_signal = 1
     n1 = 10
     n2 = 20
 
     def __is_entry_signal(self, signal: int) -> bool:
-        return self.signal_signature['entry_signal'] == signal
+        return self.signal_signature["entry_signal"] == signal
 
     def __is_exit_signal(self, signal: int) -> bool:
-        return self.signal_signature['exit_signal'] == signal
+        return self.signal_signature["exit_signal"] == signal
 
     def __deal_size(self, price: float) -> float:
         """ Определяем размер сделки. """
         # Проверяем как выполняются сделки "На всю сумму" или "На фиксированную сумму".
-        if self.deal_amount == 'fix':
+        if self.deal_amount == "fix":
             # Проверяем хватает ли выделенной фиксированной суммы на покупку хотя бы одной акции
             if self.fix_sum // price:
                 # Вычисляем размер сделки исходя из стоимости акций и имеющегося капитала
                 deal_size = self.fix_sum // price if self.fix_sum <= self.equity else 0
             else:
                 logger.warning(str(self.fix_sum) + " " + str(price))
-                logger.warning('Фиксированная сумма покупки превышает размер капитала!!! Купить не могу!!!')
+                logger.warning(
+                    "Фиксированная сумма покупки превышает размер капитала!!! Купить не могу!!!"
+                )
                 deal_size = 0
         else:
             deal_size = self.equity // price
@@ -61,7 +64,9 @@ class Long_n_Short_Strategy_Float(Strategy):
         return round(1 / (1 + math.exp(-x)), 0)
 
     def init(self):
-        self.signal = self.I(lambda x: x, self.data.df.Signal, name='Signal', overlay=False)
+        self.signal = self.I(
+            lambda x: x, self.data.df.Signal, name="Signal", overlay=False
+        )
 
     def next(self):
         # Цена закрытия предыдущая перед сигналом, на основании которого принимается решение о сделке
