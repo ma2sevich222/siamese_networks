@@ -9,8 +9,8 @@ import tensorflow as tf
 from tensorflow.keras.callbacks import *
 from tensorflow.keras.layers import Input, Lambda
 from tensorflow.keras.models import Model
-from utilits.functions_for_train_nn import get_locals, get_patterns, create_pairs, get_train_samples
-from utilits.losses import euclid_dis, eucl_dist_output_shape, contrastive_loss, accuracy
+from other_codes.old_project.old_utilits.functions_for_train_nn import get_locals, get_patterns, create_pairs, get_train_samples
+from other_codes.old_project.old_utilits.losses import euclid_dis, eucl_dist_output_shape, contrastive_loss, accuracy
 from keras.models.base_net import create_base_net
 from utilits.data_load import data_load
 
