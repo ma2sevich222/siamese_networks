@@ -14,12 +14,12 @@ from tqdm import tqdm
 from constants import *
 from models.torch_models import SiameseNetwork
 from utilits.project_functions import (
-    unstandart_data_load,
     get_train_data,
     get_triplet_random,
     train_triplet_net,
     euclid_dist,
 )
+
 import optuna
 from utilits.data_load import data_load_OHLCV
 
@@ -39,10 +39,12 @@ tresh_hold = (
 
 """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
 """""" """""" """""" """""" """"" Distance functions """ """""" """""" """""" """"""
-# distance_function = lambda x, y: 1.0 - F.cosine_similarity(x, y)  # функция расчета расстояния для триплет лосс
+distance_function = lambda x, y: 1.0 - F.cosine_similarity(
+    x, y
+)  # функция расчета расстояния для триплет лосс
 # distance_function = PairwiseDistance(p=2, eps=1e-06,)
 # distance_function = l_infinity
-distance_function = euclid_dist
+# distance_function = euclid_dist
 # distance_function = manhatten_dist
 
 """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
