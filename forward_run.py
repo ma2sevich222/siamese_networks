@@ -70,7 +70,7 @@ for i in range(n_splits):
         splited_dfs.append(df_for_split)"""
 iteration = 0
 signals = []
-for n in range(3):
+for n in range(n_iters):
     # print(f'Размер среза {len(dat)}')
     train_df = df_for_split.iloc[:train_window]
     test_df = df_for_split.iloc[train_window : sum([train_window, select_dist_window])]
