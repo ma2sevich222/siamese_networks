@@ -27,13 +27,13 @@ from utilits.strategies_AT import Long_n_Short_Strategy_Float as LnSF
 """""" """""" """""" """""" """"" Parameters Block """ """""" """""" """""" """"""
 source = "source_root"
 out_root = "outputs"
-source_file_name = "GC_2020_2022_30min.csv"
-pattern_size = 200
+source_file_name = "GC_2020_2022_15min.csv"
+pattern_size = 20
 extr_window = 24
 overlap = 0
 profit_value = 0.003
 # n_splits = 1 # количество частей на которое делим датасет
-step = 0.1
+step = 0.01
 
 train_window = 3000
 select_dist_window = 3000
@@ -70,7 +70,7 @@ for i in range(n_splits):
         splited_dfs.append(df_for_split)"""
 iteration = 0
 signals = []
-for n in range(n_iters):
+for n in range(3):
     # print(f'Размер среза {len(dat)}')
     train_df = df_for_split.iloc[:train_window]
     test_df = df_for_split.iloc[train_window : sum([train_window, select_dist_window])]
