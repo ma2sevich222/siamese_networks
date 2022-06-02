@@ -28,15 +28,15 @@ from utilits.strategies_AT import Long_n_Short_Strategy_Float as LnSF
 source = "source_root"
 out_root = "outputs"
 source_file_name = "GC_2020_2022_30min.csv"
-pattern_size = 143
-extr_window = 200
-overlap = 61
+pattern_size = 200
+extr_window = 24
+overlap = 0
 profit_value = 0.003
 # n_splits = 1 # количество частей на которое делим датасет
-step = 0.01
+step = 0.1
 
-train_window = 7000
-select_dist_window = 7000
+train_window = 3000
+select_dist_window = 3000
 forward_window = 1000
 
 
@@ -70,7 +70,7 @@ for i in range(n_splits):
         splited_dfs.append(df_for_split)"""
 iteration = 0
 signals = []
-for n in range(n_iters):
+for n in range(3):
     # print(f'Размер среза {len(dat)}')
     train_df = df_for_split.iloc[:train_window]
     test_df = df_for_split.iloc[train_window : sum([train_window, select_dist_window])]
@@ -271,5 +271,13 @@ signals_combained = pd.concat(signals, ignore_index=True, sort=False)
 
 
 forward_trade(
-    signals_combained, out_root, source_file_name, pattern_size, extr_window, overlap
+    signals_combained,
+    out_root,
+    source_file_name,
+    pattern_size,
+    extr_window,
+    overlap,
+    train_window,
+    select_dist_window,
+    forward_window,
 )

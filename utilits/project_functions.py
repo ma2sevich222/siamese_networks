@@ -581,7 +581,15 @@ def get_signals(result_df, buy_before, sell_after):
 
 
 def forward_trade(
-    result_df, DESTINATION_ROOT, FILENAME, PATTERN_SIZE, EXTR_WINDOW, OVERLAP
+    result_df,
+    DESTINATION_ROOT,
+    FILENAME,
+    PATTERN_SIZE,
+    EXTR_WINDOW,
+    OVERLAP,
+    train_window,
+    select_dist_window,
+    forward_window,
 ):
     plt_backtesting._MAX_CANDLES = 100_000
     pd.pandas.set_option("display.max_columns", None)
@@ -609,7 +617,7 @@ def forward_trade(
 
     """ Тестирвоание """
 
-    out_root = f"{FILENAME[:-4]}_forward_run_begin_{result_df.index[0]}_end_{result_df.index[-1]}"
+    out_root = f"{FILENAME[:-4]}_forward_run_begin_{result_df.index[0]}_end_{result_df.index[-1]}_({train_window / 1000}k_{select_dist_window / 1000}k_{forward_window / 1000}k_)"
     os.mkdir(f"{DESTINATION_ROOT}/{out_root}")
 
     # result_df['Signal'].where(~(result_df.Distance >= sell_after), -1, inplace=True)
