@@ -14,7 +14,7 @@ Created on Wed Feb  9 16:36:25 2022
 """""" """""" """""" """""" """"" Parameters Block """ """""" """""" """""" """"""
 SOURCE_ROOT = "source_root"
 DESTINATION_ROOT = "outputs"
-FILENAME = "GC_2020_2022_60min.csv"
+FILENAME = "New_strateY_test"
 
 
 """Основные параметры"""

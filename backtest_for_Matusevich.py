@@ -10,6 +10,7 @@ from backtesting import Backtest
 import backtesting._plotting as plt_backtesting
 from tqdm import trange, tqdm
 import os
+from utilits.lazy_strategy import LazyStrategy
 
 from constants import (
     DESTINATION_ROOT,
@@ -32,7 +33,7 @@ pd.options.display.expand_frame_repr = False
 pd.set_option("precision", 2)
 
 source_root = DESTINATION_ROOT
-source_filename = "test_resultsGC_2020_2022_60min_extrw140_patsize86_ov10.csv"
+source_filename = "test_resultsGC_2020_2022_15min_extrw150_patsize620_ov105.csv"
 out_root = f"{FILENAME[:-4]}_only_best"
 os.mkdir(f"{DESTINATION_ROOT}/{out_root}")
 
@@ -60,6 +61,7 @@ result_filename = (
 
 """ Тестирвоание """ """ Тестирвоание """
 df_stats = pd.DataFrame()
+
 for sell_after in trange(int(1 / step), int(round(df.Distance.max(), 1) / step)):
     for buy_before in range(int(round(df.Distance.min(), 1) / step), int(1 / step)):
         # print(f'Диапазон Distance from {sell_trash/10} to {buy_trash/10}')
@@ -76,8 +78,16 @@ for sell_after in trange(int(1 / step), int(round(df.Distance.max(), 1) / step))
             f"{DESTINATION_ROOT}/{out_root}/signals_{FILENAME[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}_step{step}_{buy_before * step}_{sell_after * step}.csv"
         )
 
-        bt = Backtest(df, LnSF, cash=deposit, commission=0.00, trade_on_close=True)
-        stats = bt.run(deal_amount="fix", fix_sum=20000)[:27]
+        bt = Backtest(
+            df,
+            strategy=LazyStrategy,
+            cash=100000,
+            commission_type="absolute",
+            commission=4.62,
+            features_coeff=10,
+            exclusive_orders=True,
+        )
+        stats = bt.run(deal_amount="fix", fix_sum=200000)[:27]
         if (
             stats["Return (Ann.) [%]"] > 0
         ):  # будем показывать и сохранять только доходные разметки

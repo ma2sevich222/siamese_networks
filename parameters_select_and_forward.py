@@ -15,25 +15,27 @@ from utilits.project_functions import (
     train_triplet_net,
     get_CLtrain_data,
     get_stat_after_forward,
-    find_best_dist,
+    find_best_dist_stbl,
     get_signals,
 )
 
 """""" """""" """""" """""" """"" Parameters Block """ """""" """""" """""" """"""
 source = "source_root"
 out_root = "outputs"
-source_file_name = "GC_2020_2022_30min.csv"
+source_file_name = "GC_2020_2022_60min.csv"
+start_forward_time = "2021-03-25 00:00:00"
 profit_value = 0.003
 step = 0.1
-pattern_size_list = [20, 40, 60, 80, 100, 120, 140]
-extr_window_list = [30, 60, 90, 120, 150, 180]
-overlap_list = [0, 5, 10]
-train_window_list = [2500, 4000, 5500, 7000]
-select_distance_list = [2500, 4000, 5500, 7000]
-forward_window_list = [2500, 4000, 5500, 7000]
+pattern_size_list = [10, 20, 30, 40, 50, 60, 70]
+extr_window_list = [50, 120, 160, 180]
+overlap_list = [10, 15, 20]
+train_window_list = [1500, 2500]
+select_distance_list = [1500, 2500]
+forward_window_list = [705, 1411, 2822, 5644]
+
 
 """""" """""" """""" """""" """"" Net Parameters Block """ """""" """""" """""" """"""
-epochs = 7  # количество эпох
+epochs = 12  # количество эпох
 lr = 0.000009470240447408595  # learnig rate
 embedding_dim = 160  # размер скрытого пространства
 margin = 20  # маржа для лосс функции
@@ -44,17 +46,31 @@ out_data_root = f"{source_file_name[:-4]}_select_and_forward"
 os.mkdir(f"{out_root}/{out_data_root}")
 
 df = pd.read_csv(f"{source}/{source_file_name}")
+forward_index = df[df["Datetime"] == start_forward_time].index[0]
+print(forward_index)
+
+
 for train_window in tqdm(train_window_list):
-    for select_dist_window in select_dist_window:
+    for select_dist_window in select_distance_list:
         for forward_window in forward_window_list:
             for pattern_size in pattern_size_list:
                 for extr_window in extr_window_list:
                     for overlap in overlap_list:
+
+                        df_for_split = df[
+                            (
+                                df.index
+                                >= forward_index - train_window - select_dist_window
+                            )
+                        ].copy()
+                        df_for_split = df_for_split.reset_index(drop=True)
                         n_iters = (
-                            len(df)
+                            len(df_for_split)
                             - sum([train_window, select_dist_window, forward_window])
                         ) // forward_window
-                        df_for_split = df.copy()
+
+                        if n_iters < 1:
+                            n_iters = 1
                         signals = []
                         for n in range(n_iters):
                             train_df = df_for_split.iloc[:train_window]
@@ -203,7 +219,9 @@ for train_window in tqdm(train_window_list):
                                 }
                             )
 
-                            buy_before, sell_after = find_best_dist(test_result, step)
+                            buy_before, sell_after = find_best_dist_stbl(
+                                test_result, step
+                            )
 
                             print(f"BUY BEFORE = {buy_before}")
                             print(f"SELL AFTER = {sell_after}")
@@ -307,18 +325,20 @@ for train_window in tqdm(train_window_list):
                             profit_value,
                         )
                         final_stats_list.append(df_stata)
+
                         intermedia = pd.concat(
                             final_stats_list, ignore_index=True, sort=False
                         )
-                        intermedia.to_excel(
-                            f"intermedia{source_file_name[:-4]}_select_and_forward.xlsx"
-                        )
 
+                        intermedia.to_excel(
+                            f"{out_root}/{out_data_root}/intermedia{source_file_name[:-4]}_select_and_forward.xlsx"
+                        )
 
 final_stats_df = pd.concat(final_stats_list, ignore_index=True, sort=False)
 final_stats_df.sort_values(by="Net Profit [$]", ascending=False).to_excel(
-    f"{source_file_name[:-4]}_select_and_forward.xlsx"
+    f"{out_root}/{out_data_root}/{source_file_name[:-4]}_select_and_forward.xlsx"
 )
+
 # print(df_stats)
 
 df_plot = final_stats_df[
