@@ -14,7 +14,7 @@ Created on Wed Feb  9 16:36:25 2022
 """""" """""" """""" """""" """"" Parameters Block """ """""" """""" """""" """"""
 SOURCE_ROOT = "source_root"
 DESTINATION_ROOT = "outputs"
-FILENAME = "New_strateY_test"
+FILENAME = "CL2017_2022.csv"
 
 
 """Основные параметры"""

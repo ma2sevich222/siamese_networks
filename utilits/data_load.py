@@ -316,6 +316,7 @@ def data_load_CL(
         df.index.duplicated(keep=False)
     ].sort_index()  # проверка дубликатов
     assert df_duplicated.shape[0] == 0, "В коде существуют дубликаты!"
+    df.to_csv("CL_saved.csv")
     # df = df.rename(columns={"<Volume>": "Volume"})
     # del df["Time"], df["Date"]
     # del df['MACD'], df['MACDAvg'], df['MACDDiff'], df['AvgExp'], df['vwap_reset'], df['AvgExp.1']

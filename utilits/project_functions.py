@@ -688,6 +688,10 @@ def get_stat_after_forward(
     select_dist_window,
     forward_window,
     profit_value,
+    source_file_name,
+    out_root,
+    out_data_root,
+    get_trade_info=False,
 ):
     plt_backtesting._MAX_CANDLES = 100_000
     pd.pandas.set_option("display.max_columns", None)
@@ -768,6 +772,19 @@ def get_stat_after_forward(
     df_stats["extr_window"] = EXTR_WINDOW
     df_stats["profit_value"] = profit_value
     df_stats["overlap"] = OVERLAP
+    if get_trade_info == True:
+        bt.plot(
+            plot_volume=True,
+            relative_equity=False,
+            filename=f"{out_root}/{out_data_root}/forward_bt_plot_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.html",
+        )
+        stats.to_csv(
+            f"{out_root}/{out_data_root}/forward_stats_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.txt"
+        )
+        result_df.to_csv(
+            f"{out_root}/{out_data_root}/forward_signals_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.csv"
+        )
+
     return df_stats
 
 

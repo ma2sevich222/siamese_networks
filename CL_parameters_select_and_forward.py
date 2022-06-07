@@ -8,7 +8,6 @@ from torch.nn import functional as F
 from torch.utils.data import TensorDataset, DataLoader
 from tqdm import trange, tqdm
 from models.torch_models import shotSiameseNetwork
-from utilits.data_load import data_load_OHLCV, data_load_CL
 from utilits.project_functions import (
     get_train_data,
     get_triplet_random,
@@ -22,28 +21,27 @@ from utilits.project_functions import (
 """""" """""" """""" """""" """"" Parameters Block """ """""" """""" """""" """"""
 source = "source_root"
 out_root = "outputs"
-source_file_name = "GC_2020_2022_15min.csv"
-start_forward_time = "2021-03-24 23:00:00"
-get_trade_info = True  # True если хотим сохранить сигналы, статистику и график торгов
-# run_mode = "best"
+source_file_name = "GC_2020_2022_60min.csv"
+start_forward_time = "2021-03-25 00:00:00"
+get_trade_info = False  # True если хотим сохранить сигналы, статистику и график торгов
 profit_value = 0.003
 step = 0.1
-pattern_size_list = [100]
-extr_window_list = [150]
-overlap_list = [0]
-train_window_list = [3000]
-select_distance_list = [4000]
-forward_window_list = [9832]
+pattern_size_list = [10, 20, 30, 40, 50, 60, 70]
+extr_window_list = [50, 120, 160, 180]
+overlap_list = [10, 15, 20]
+train_window_list = [1500, 2500]
+select_distance_list = [1500, 2500]
+forward_window_list = [705, 1411, 2822, 5644]
+
 
 """""" """""" """""" """""" """"" Net Parameters Block """ """""" """""" """""" """"""
-epochs = 7  # количество эпох
+epochs = 12  # количество эпох
 lr = 0.000009470240447408595  # learnig rate
 embedding_dim = 160  # размер скрытого пространства
 margin = 20  # маржа для лосс функции
 batch_size = 150  # размер батчсайз
 distance_function = lambda x, y: 1.0 - F.cosine_similarity(x, y)
 final_stats_list = []
-
 out_data_root = f"{source_file_name[:-4]}_select_and_forward"
 os.mkdir(f"{out_root}/{out_data_root}")
 
@@ -103,7 +101,7 @@ for train_window in tqdm(train_window_list):
                                 test_df["Datetime"],
                                 forward_df["Datetime"],
                             )
-                            train_x, n_samples_to_train = get_train_data(
+                            train_x, n_samples_to_train = get_CLtrain_data(
                                 train_df,
                                 profit_value,
                                 extr_window,
@@ -138,29 +136,34 @@ for train_window in tqdm(train_window_list):
                             """""" """""" """""" """""" """"" Train net  """ """""" """""" """""" """"""
 
                             net = shotSiameseNetwork(embedding_dim=embedding_dim).cuda()
-                            torch.cuda.empty_cache()
                             train_triplet_net(
                                 lr, epochs, my_dataloader, net, distance_function
                             )
 
                             """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
                             """""" """""" """""" """""" """"" Test data prepare  """ """""" """""" """""" """"""
-                            scaler = StandardScaler()
-                            eval_array = test_df.to_numpy()
+                            eval_array = test_df[
+                                [
+                                    "DiffEMA",
+                                    "SmoothDiffEMA",
+                                    "VolatilityTunnel",
+                                    "BuyIntense",
+                                    "SellIntense",
+                                ]
+                            ].to_numpy()
                             eval_samples = [
                                 eval_array[i - pattern_size : i]
                                 for i in range(len(eval_array))
                                 if i - pattern_size >= 0
                             ]
-                            eval_normlzd = [
-                                scaler.fit_transform(i) for i in eval_samples
+                            eval_ohlcv = test_df[
+                                ["Open", "High", "Low", "Close", "Volume"]
+                            ].to_numpy()
+                            ohlcv_samples = [
+                                eval_ohlcv[i - pattern_size : i]
+                                for i in range(len(eval_ohlcv))
+                                if i - pattern_size >= 0
                             ]
-                            eval_normlzd = np.array(eval_normlzd).reshape(
-                                -1,
-                                eval_samples[0].shape[0],
-                                eval_samples[0][0].shape[0],
-                                1,
-                            )
 
                             """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
                             """""" """""" """""" """""" """"" Test model  """ """""" """""" """""" """"""
@@ -176,7 +179,7 @@ for train_window in tqdm(train_window_list):
 
                             net.eval()
                             with torch.no_grad():
-                                for indexI, eval_arr in enumerate(eval_normlzd):
+                                for indexI, eval_arr in enumerate(eval_samples):
                                     anchor = train_x[0][0].reshape(
                                         1,
                                         eval_samples[0].shape[0],
@@ -202,11 +205,11 @@ for train_window in tqdm(train_window_list):
                                     date.append(
                                         test_dates.Datetime[indexI + (pattern_size - 1)]
                                     )
-                                    open.append(float(eval_samples[indexI][-1, [0]]))
-                                    high.append(float(eval_samples[indexI][-1, [1]]))
-                                    low.append(float(eval_samples[indexI][-1, [2]]))
-                                    close.append(float(eval_samples[indexI][-1, [3]]))
-                                    volume.append(float(eval_samples[indexI][-1, [4]]))
+                                    open.append(float(ohlcv_samples[indexI][-1, [0]]))
+                                    high.append(float(ohlcv_samples[indexI][-1, [1]]))
+                                    low.append(float(ohlcv_samples[indexI][-1, [2]]))
+                                    close.append(float(ohlcv_samples[indexI][-1, [3]]))
+                                    volume.append(float(ohlcv_samples[indexI][-1, [4]]))
                                     train_data_shape.append(float(train_df.shape[0]))
 
                             test_result = pd.DataFrame(
@@ -231,22 +234,28 @@ for train_window in tqdm(train_window_list):
 
                             """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
                             """""" """""" """""" """""" """"" Forward data prepare  """ """""" """""" """""" """"""
-                            scaler = StandardScaler()
-                            eval_array = forward_df.to_numpy()
-                            eval_samples = [
-                                eval_array[i - pattern_size : i]
-                                for i in range(len(eval_array))
+                            forward_array = forward_df[
+                                [
+                                    "DiffEMA",
+                                    "SmoothDiffEMA",
+                                    "VolatilityTunnel",
+                                    "BuyIntense",
+                                    "SellIntense",
+                                ]
+                            ].to_numpy()
+                            forward_samples = [
+                                forward_array[i - pattern_size : i]
+                                for i in range(len(forward_array))
                                 if i - pattern_size >= 0
                             ]
-                            eval_normlzd = [
-                                scaler.fit_transform(i) for i in eval_samples
+                            forward_ohlcv = forward_df[
+                                ["Open", "High", "Low", "Close", "Volume"]
+                            ].to_numpy()
+                            ohlcv_forward_samples = [
+                                eval_ohlcv[i - pattern_size : i]
+                                for i in range(len(forward_ohlcv))
+                                if i - pattern_size >= 0
                             ]
-                            eval_normlzd = np.array(eval_normlzd).reshape(
-                                -1,
-                                eval_samples[0].shape[0],
-                                eval_samples[0][0].shape[0],
-                                1,
-                            )
 
                             """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
                             """""" """""" """""" """""" """"" Forward model  """ """""" """""" """""" """"""
@@ -262,17 +271,17 @@ for train_window in tqdm(train_window_list):
 
                             net.eval()
                             with torch.no_grad():
-                                for indexI, eval_arr in enumerate(eval_normlzd):
+                                for indexI, eval_arr in enumerate(forward_samples):
                                     anchor = train_x[0][0].reshape(
                                         1,
-                                        eval_samples[0].shape[0],
-                                        eval_samples[0][0].shape[0],
+                                        forward_samples[0].shape[0],
+                                        forward_samples[0][0].shape[0],
                                         1,
                                     )
                                     eval_arr_r = eval_arr.reshape(
                                         1,
-                                        eval_samples[0].shape[0],
-                                        eval_samples[0][0].shape[0],
+                                        forward_samples[0].shape[0],
+                                        forward_samples[0][0].shape[0],
                                         1,
                                     )
                                     anchor = torch.Tensor(anchor)
@@ -290,11 +299,21 @@ for train_window in tqdm(train_window_list):
                                             indexI + (pattern_size - 1)
                                         ]
                                     )
-                                    open.append(float(eval_samples[indexI][-1, [0]]))
-                                    high.append(float(eval_samples[indexI][-1, [1]]))
-                                    low.append(float(eval_samples[indexI][-1, [2]]))
-                                    close.append(float(eval_samples[indexI][-1, [3]]))
-                                    volume.append(float(eval_samples[indexI][-1, [4]]))
+                                    open.append(
+                                        float(ohlcv_forward_samples[indexI][-1, [0]])
+                                    )
+                                    high.append(
+                                        float(ohlcv_forward_samples[indexI][-1, [1]])
+                                    )
+                                    low.append(
+                                        float(ohlcv_forward_samples[indexI][-1, [2]])
+                                    )
+                                    close.append(
+                                        float(ohlcv_forward_samples[indexI][-1, [3]])
+                                    )
+                                    volume.append(
+                                        float(ohlcv_forward_samples[indexI][-1, [4]])
+                                    )
                                     train_data_shape.append(float(train_df.shape[0]))
 
                             forward_result = pd.DataFrame(
