@@ -22,11 +22,11 @@ from utilits.project_functions import (
     fliped_find_best_dist_stbl,
 )
 
-"""torch.manual_seed(2020)
+torch.manual_seed(2020)
 torch.cuda.manual_seed(2020)
 np.random.seed(2020)
 random.seed(2020)
-torch.backends.cudnn.deterministic = True"""
+torch.backends.cudnn.deterministic = True
 """""" """""" """""" """""" """"" Parameters Block """ """""" """""" """""" """"""
 source = "source_root"
 out_root = "outputs"
