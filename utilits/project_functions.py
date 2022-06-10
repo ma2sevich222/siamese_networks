@@ -912,3 +912,123 @@ def find_best_dist_stbl(result_df, step):
         fig.show()"""
 
     return buy_before, sell_after
+
+
+def fliped_get_signals(result_df, sell_before, buy_after):
+
+    result_df["Signal"] = 0
+    print("******* Результы предсказания сети *******")
+    print(result_df)
+    print()
+
+    result_df["Signal"].where(~(result_df.Distance >= buy_after), 1, inplace=True)
+    result_df["Signal"].where(~(result_df.Distance <= sell_before), -1, inplace=True)
+
+    return result_df
+
+
+def fliped_find_best_dist_stbl(result_df, step):
+    plt_backtesting._MAX_CANDLES = 100_000
+    pd.pandas.set_option("display.max_columns", None)
+    pd.set_option("expand_frame_repr", False)
+    pd.options.display.expand_frame_repr = False
+    pd.set_option("precision", 2)
+
+    result_df.set_index("Datetime", inplace=True)
+    result_df.index = pd.to_datetime(result_df.index)
+    result_df = result_df.sort_index()
+    result_df["Signal"] = 0
+    print("******* Результы предсказания сети *******")
+    print(result_df)
+    print()
+
+    """ Параметры тестирования """
+    i = 0
+    deposit = 100000  # сумма одного контракта GC & CL
+    comm = 4.6  # GC - комиссия для золота
+    # comm = 4.52  # CL - комиссия для нейти
+    # sell_after = 1.6
+    # buy_before = 0.6
+    # step = 0.1  # с каким шагом проводим тест разметки
+    # result_filename = f'{DESTINATION_ROOT}/selection_distances_{FILENAME[:-4]}_step{step}'
+
+    """ Тестирвоание """
+
+    df_stats = pd.DataFrame()
+    min_dist = result_df.Distance.min()
+    max_dist = result_df.Distance.max()
+
+    while step > max_dist:
+        step = step / 10
+
+    forward = [
+        i
+        for i in range(int(step / step), int((max_dist / step) + 1))
+        if i >= int(min_dist / step)
+    ]
+    reversed = forward[::-1]
+
+    for sell_before in forward:
+        for buy_after in reversed:
+            # print(f'Диапазон Distance from {sell_trash/10} to {buy_trash/10}')
+            result_df["Signal"].where(
+                ~(result_df.Distance <= sell_before * step), -1, inplace=True
+            )
+            result_df["Signal"].where(
+                ~(result_df.Distance >= buy_after * step), 1, inplace=True
+            )
+            # df['Signal'] = np.roll(df.Signal, 2)
+
+            # сделаем так, чтобы 0 расценивался как "держать прежнюю позицию"
+            result_df.loc[
+                result_df["Signal"] == 0, "Signal"
+            ] = np.nan  # заменим 0 на nan
+            result_df["Signal"] = result_df[
+                "Signal"
+            ].ffill()  # заменим nan на предыдущие значения
+            result_df.dropna(axis=0, inplace=True)  # Удаляем наниты
+            result_df = result_df.loc[
+                result_df["Signal"] != 0
+            ]  # оставим только не нулевые строки
+            """df.to_csv(
+                    f'{DESTINATION_ROOT}/{out_root}/signals_{FILENAME[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}_step{step}_{buy_before * step}_{sell_after * step}.csv')"""
+
+            bt = Backtest(
+                result_df,
+                strategy=LazyStrategy,
+                cash=deposit,
+                commission_type="absolute",
+                commission=4.62,
+                features_coeff=10,
+                exclusive_orders=True,
+            )
+            stats = bt.run()[:27]
+            """if stats['Return (Ann.) [%]'] > 0:  # будем показывать и сохранять только доходные разметки
+                    bt.plot(plot_volume=True, relative_equity=True,
+                            filename=f'{DESTINATION_ROOT}/{out_root}/bt_plot_{FILENAME[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}_step{step}_{buy_before * step}_{sell_after * step}.html'
+                            )
+                stats.to_csv(
+                    f'{DESTINATION_ROOT}/{out_root}/stats_{FILENAME[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}_step{step}_{buy_before * step}_{sell_after * step}.txt')"""
+
+            df_stats = df_stats.append(stats, ignore_index=True)
+            df_stats.loc[i, "Net Profit [$]"] = (
+                df_stats.loc[i, "Equity Final [$]"]
+                - deposit
+                - df_stats.loc[i, "# Trades"] * comm
+            )
+            df_stats.loc[i, "sell_before"] = sell_before * step
+            df_stats.loc[i, "buy_after"] = buy_after * step
+            """df_stats.loc[i, 'train_window'] = int(df['Train_shape'].iloc[0])
+                df_stats.loc[i, 'pattern_size'] = PATTERN_SIZE
+                df_stats.loc[i, 'extr_window'] = EXTR_WINDOW
+                df_stats.loc[i, 'profit_value'] = profit_value
+                df_stats.loc[i, 'overlap'] = OVERLAP"""
+            i += 1
+        reversed = reversed[:-1]
+
+    df_stats = df_stats.sort_values(by="Net Profit [$]", ascending=False)
+    df_stats = df_stats.loc[df_stats["# Trades"] > 1].reset_index(drop=True)
+    sell_before = df_stats.loc[df_stats.index[0], "sell_before"]
+    buy_after = df_stats.loc[df_stats.index[0], "buy_after"]
+
+    return sell_before, buy_after

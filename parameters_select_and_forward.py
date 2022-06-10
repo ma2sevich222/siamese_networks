@@ -3,11 +3,12 @@ import pandas as pd
 import plotly.express as px
 import torch
 import os
+import random
 from sklearn.preprocessing import StandardScaler
 from torch.nn import functional as F
 from torch.utils.data import TensorDataset, DataLoader
 from tqdm import trange, tqdm
-from models.torch_models import shotSiameseNetwork
+from models.torch_models import shotSiameseNetwork, simpleSiameseNetwork
 from utilits.data_load import data_load_OHLCV, data_load_CL
 from utilits.project_functions import (
     get_train_data,
@@ -17,30 +18,37 @@ from utilits.project_functions import (
     get_stat_after_forward,
     find_best_dist_stbl,
     get_signals,
+    fliped_get_signals,
+    fliped_find_best_dist_stbl,
 )
 
+"""torch.manual_seed(2020)
+torch.cuda.manual_seed(2020)
+np.random.seed(2020)
+random.seed(2020)
+torch.backends.cudnn.deterministic = True"""
 """""" """""" """""" """""" """"" Parameters Block """ """""" """""" """""" """"""
 source = "source_root"
 out_root = "outputs"
-source_file_name = "GC_2020_2022_15min.csv"
-start_forward_time = "2021-03-24 23:00:00"
+source_file_name = "GC_2020_2022_30min.csv"
+start_forward_time = "2021-03-24 23:30:00"
 get_trade_info = True  # True если хотим сохранить сигналы, статистику и график торгов
 # run_mode = "best"
 profit_value = 0.003
 step = 0.1
-pattern_size_list = [100]
-extr_window_list = [150]
-overlap_list = [0]
-train_window_list = [3000]
+pattern_size_list = [20]
+extr_window_list = [100]
+overlap_list = [5]
+train_window_list = [4000]
 select_distance_list = [4000]
 forward_window_list = [9832]
 
 """""" """""" """""" """""" """"" Net Parameters Block """ """""" """""" """""" """"""
-epochs = 7  # количество эпох
+epochs = 12  # количество эпох
 lr = 0.000009470240447408595  # learnig rate
 embedding_dim = 160  # размер скрытого пространства
 margin = 20  # маржа для лосс функции
-batch_size = 150  # размер батчсайз
+batch_size = 150  # размер батчсайз #150
 distance_function = lambda x, y: 1.0 - F.cosine_similarity(x, y)
 final_stats_list = []
 

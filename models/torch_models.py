@@ -52,7 +52,7 @@ class SiameseNetwork(nn.Module):
 
 
 class shotSiameseNetwork(nn.Module):
-    def __init__(self, embedding_dim=2):
+    def __init__(self, embedding_dim):
         super(shotSiameseNetwork, self).__init__()
 
         # Setting up the Sequential of CNN Layers
@@ -99,7 +99,7 @@ class shotSiameseNetwork(nn.Module):
 
 
 class SiameseNetwork_extend(nn.Module):
-    def __init__(self, base_model, embedding_dim=2):
+    def __init__(self, base_model, embedding_dim):
         super(SiameseNetwork_extend, self).__init__()
 
         self.cnn1 = nn.Sequential(
@@ -212,3 +212,51 @@ class ContrastiveLoss(torch.nn.Module):
         )
 
         return loss_contrastive
+
+
+class simpleSiameseNetwork(nn.Module):
+    def __init__(self, embedding_dim):
+        super(simpleSiameseNetwork, self).__init__()
+
+        """'# Setting up the Sequential of CNN Layers
+        self.cnn1 = nn.Sequential(
+            nn.Conv2d(1, 256, kernel_size=2, stride=1),
+            # nn.LeakyReLU(2, inplace=True),
+            # nn.ELU(alpha=1.0, inplace=True)
+            nn.Sigmoid()
+            # nn.MaxPool2d(3, stride=1),
+            # nn.Conv2d(256, 256, kernel_size=2, stride=1),
+            # nn.LeakyReLU(2, inplace=True),
+            # nn.MaxPool2d(2, stride=1),
+            # nn.Conv2d(256, 256, kernel_size=2, stride=1),
+            # nn.LeakyReLU(2, inplace=True)
+        )"""
+
+        # Setting up the Fully Connected Layers
+        self.fc1 = nn.Sequential(
+            nn.Flatten(),
+            nn.LazyLinear(embedding_dim),
+            nn.LeakyReLU(2, inplace=True),
+            # nn.ELU(alpha=1.0, inplace=True)
+            # nn.Sigmoid()
+            # nn.Linear(256, 256),
+            # nn.LeakyReLU(2, inplace=True),
+            # nn.Linear(256, embedding_dim)
+        )
+
+    def forward_once(self, x):
+        # This function will be called for both images
+        # It's output is used to determine the similiarity
+        """output = self.cnn1(x)
+        output = output.contiguous().view(output.size()[0], -1)"""
+        output = self.fc1(x)
+        return output
+
+    def forward(self, input1, input2, input3):
+        # In this function we pass in both images and obtain both vectors
+        # which are returned
+        output1 = self.forward_once(input1)
+        output2 = self.forward_once(input2)
+        output3 = self.forward_once(input3)
+
+        return output1, output2, output3
