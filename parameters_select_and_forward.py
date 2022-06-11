@@ -57,7 +57,6 @@ os.mkdir(f"{out_root}/{out_data_root}")
 
 df = pd.read_csv(f"{source}/{source_file_name}")
 forward_index = df[df["Datetime"] == start_forward_time].index[0]
-print(forward_index)
 
 
 for train_window in tqdm(train_window_list):
