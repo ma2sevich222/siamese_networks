@@ -196,9 +196,11 @@ def show_plot(iteration, loss):
 
 
 # функция обучения модели
-def train_triplet_net(lr, epochs, my_dataloader, net, distance_function):
+def train_triplet_net(lr, epochs, my_dataloader, net, distance_function, margin):
     optimizer = optim.Adam(net.parameters(), lr)
-    triplet_loss = TripletMarginWithDistanceLoss(distance_function=distance_function)
+    triplet_loss = TripletMarginWithDistanceLoss(
+        distance_function=distance_function, margin=margin
+    )
     counter = []
     loss_history = []
     iteration_number = 0

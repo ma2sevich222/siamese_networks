@@ -10,7 +10,7 @@ from sklearn.preprocessing import StandardScaler
 from torch.nn import functional as F
 from torch.utils.data import TensorDataset, DataLoader
 from tqdm import trange, tqdm
-from models.torch_models import shotSiameseNetwork, simpleSiameseNetwork
+from models.torch_models import shotSiameseNetwork
 from utilits.data_load import data_load_OHLCV, data_load_CL
 from utilits.project_functions import (
     get_train_data,
@@ -28,7 +28,7 @@ today = date.today()
 date_xprmnt = today.strftime("%d_%m_%Y")
 source = "source_root"
 out_root = "outputs"
-source_file_name = "GC_2020_2022_30min.csv"
+source_file_name = "GC_2020_2022_60min.csv"
 out_data_root = f"{source_file_name[:-4]}_uptune_{date_xprmnt}"
 os.mkdir(f"{out_root}/{out_data_root}")
 
@@ -42,28 +42,29 @@ def objective(trial):
     torch.backends.cudnn.deterministic = True
     """""" """""" """""" """""" """"" Общие настройки """ """""" """""" """""" """"""
 
-    start_forward_time = "2021-03-24 23:30:00"
+    start_forward_time = "2021-03-25 00:00:00"
     df = pd.read_csv(f"{source}/{source_file_name}")
     forward_index = df[df["Datetime"] == start_forward_time].index[0]
     step = 0.1
     get_trade_info = True
     distance_function = lambda x, y: 1.0 - F.cosine_similarity(x, y)
     """""" """""" """""" """""" """"" Параметры для оптимизации   """ """ """ """ """ """ """ """ """ ""
-    extr_window = trial.suggest_int("extr_window", 60, 120)
-    pattern_size = trial.suggest_int("pattern_size", 90, 140)
-    overlap = trial.suggest_int("overlap", 0, 20)
-    epochs = trial.suggest_int("epochs", 6, 7)
-    batch_size = trial.suggest_int("batch_size", 149, 150)
-    embedding_dim = trial.suggest_int("batch_size", 19, 20)
-    lr = trial.suggest_loguniform("lr", 1e-8, 1e-7)
-    margin = trial.suggest_int("margin", 19, 20)
-    profit_value = trial.suggest_float("profit_value", 0.015, 0.03)
-    train_window = trial.suggest_int("train_window", 3000, 5000)
-    select_dist_window = trial.suggest_int("select_dist_window", 3000, 5000)
+    extr_window = trial.suggest_int("extr_window", 60, 120, step=60)
+    pattern_size = trial.suggest_int("pattern_size", 10, 40, step=10)
+    overlap = trial.suggest_int("overlap", 0, 20, step=10)
+    epochs = trial.suggest_int("epochs", 2, 8, step=2)
+    batch_size = trial.suggest_int("batch_size", 50, 150, step=50)
+    embedding_dim = trial.suggest_int("batch_size", 50, 200, step=50)
+    lr = trial.suggest_loguniform("lr", 1e-6, 1e-3)
+    margin = trial.suggest_discrete_uniform("margin", 1.0, 5.0, 1.0)
+    profit_value = trial.suggest_discrete_uniform("profit_value", 0, 0.03, 0.01)
+    train_window = trial.suggest_int("train_window", 5000, 5100, step=100)
+    select_dist_window = trial.suggest_int("select_dist_window", 1500, 2500, step=1000)
     forward_window = trial.suggest_int(
         "forward_window",
         len(df.iloc[forward_index:]) // 2,
         len(df.iloc[forward_index:]),
+        step=len(df.iloc[forward_index:]) // 2,
     )
     df_for_split = df[
         (df.index >= forward_index - train_window - select_dist_window)
@@ -119,7 +120,7 @@ def objective(trial):
 
         net = shotSiameseNetwork(embedding_dim=embedding_dim).cuda()
         torch.cuda.empty_cache()
-        train_triplet_net(lr, epochs, my_dataloader, net, distance_function)
+        train_triplet_net(lr, epochs, my_dataloader, net, distance_function, margin)
 
         """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
         """""" """""" """""" """""" """"" Test data prepare  """ """""" """""" """""" """"""
@@ -281,12 +282,19 @@ def objective(trial):
     net_profit = df_stata["Net Profit [$]"].values
     Sharpe_Ratio = df_stata["Sharpe Ratio"].values
     torch.save(net.state_dict(), f"{out_root}/{out_data_root}/weights.pt")
-
+    """profit = f"net_ptofit = {net_profit}"
+    Sharpe = f"Sharpe_Ratiot= {Sharpe_Ratio}"
+    parameters = trial.params
+    intermedia = open(f"{out_root}/{out_data_root}/intermedia.txt", "a")
+    intermedia.write(profit)
+    intermedia.write(Sharpe)
+    intermedia.write(parameters)
+    intermedia.close()"""
     return net_profit, Sharpe_Ratio
 
 
 study = optuna.create_study(directions=["maximize", "maximize"])
-study.optimize(objective, n_trials=1)
+study.optimize(objective, n_trials=10000)
 
 
 tune_results = study.trials_dataframe()

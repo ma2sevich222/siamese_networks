@@ -147,7 +147,12 @@ for train_window in tqdm(train_window_list):
                             net = shotSiameseNetwork(embedding_dim=embedding_dim).cuda()
                             torch.cuda.empty_cache()
                             train_triplet_net(
-                                lr, epochs, my_dataloader, net, distance_function
+                                lr,
+                                epochs,
+                                my_dataloader,
+                                net,
+                                distance_function,
+                                margin,
                             )
 
                             """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
