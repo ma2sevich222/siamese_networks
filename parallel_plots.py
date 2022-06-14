@@ -1,8 +1,8 @@
 import pandas as pd
 import plotly.express as px
 
-file_root = "outputs/GC_2020_2022_30min_select_and_forward"
-filename = "intermediaGC_2020_2022_30min_select_and_forward.xlsx"
+file_root = "outputs/CL_2020_2022_select_and_forward"
+filename = "intermediaCL_2020_2022_select_and_forward.xlsx"
 final_df = pd.read_excel(f"{file_root}/{filename}")  # загружаем результаты  анализа
 
 df_plot = final_df[
