@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import torch
+import random
 import os
 from sklearn.preprocessing import StandardScaler
 from torch.nn import functional as F
@@ -18,27 +19,32 @@ from utilits.project_functions import (
     get_signals,
 )
 
+torch.manual_seed(2020)
+torch.cuda.manual_seed(2020)
+np.random.seed(2020)
+random.seed(2020)
+torch.backends.cudnn.deterministic = True
 """""" """""" """""" """""" """"" Parameters Block """ """""" """""" """""" """"""
 source = "source_root"
 out_root = "outputs"
-source_file_name = "GC_2020_2022_60min.csv"
-start_forward_time = "2021-03-25 00:00:00"
-get_trade_info = False  # True если хотим сохранить сигналы, статистику и график торгов
+source_file_name = "CL_2020_2022.csv"
+start_forward_time = "2021-01-03 23:00:00"
+get_trade_info = True  # True если хотим сохранить сигналы, статистику и график торгов
 profit_value = 0.003
 step = 0.1
-pattern_size_list = [10, 20, 30, 40, 50, 60, 70]
-extr_window_list = [50, 120, 160, 180]
-overlap_list = [10, 15, 20]
-train_window_list = [1500, 2500]
-select_distance_list = [1500, 2500]
-forward_window_list = [705, 1411, 2822, 5644]
+pattern_size_list = [500, 1000, 2000]
+extr_window_list = [1000, 2000, 500]
+overlap_list = [0]
+train_window_list = [150000]
+select_distance_list = [150000]
+forward_window_list = [112500, 225000]
 
 
 """""" """""" """""" """""" """"" Net Parameters Block """ """""" """""" """""" """"""
 epochs = 12  # количество эпох
 lr = 0.000009470240447408595  # learnig rate
 embedding_dim = 160  # размер скрытого пространства
-margin = 20  # маржа для лосс функции
+margin = 1  # маржа для лосс функции
 batch_size = 150  # размер батчсайз
 distance_function = lambda x, y: 1.0 - F.cosine_similarity(x, y)
 final_stats_list = []
@@ -64,10 +70,7 @@ for train_window in tqdm(train_window_list):
                             )
                         ].copy()
                         df_for_split = df_for_split.reset_index(drop=True)
-                        n_iters = (
-                            len(df_for_split)
-                            - sum([train_window, select_dist_window, forward_window])
-                        ) // forward_window
+                        n_iters = (len(df_for_split)) // forward_window
 
                         if n_iters < 1:
                             n_iters = 1
@@ -137,7 +140,12 @@ for train_window in tqdm(train_window_list):
 
                             net = shotSiameseNetwork(embedding_dim=embedding_dim).cuda()
                             train_triplet_net(
-                                lr, epochs, my_dataloader, net, distance_function
+                                lr,
+                                epochs,
+                                my_dataloader,
+                                net,
+                                distance_function,
+                                margin,
                             )
 
                             """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
@@ -252,7 +260,7 @@ for train_window in tqdm(train_window_list):
                                 ["Open", "High", "Low", "Close", "Volume"]
                             ].to_numpy()
                             ohlcv_forward_samples = [
-                                eval_ohlcv[i - pattern_size : i]
+                                forward_ohlcv[i - pattern_size : i]
                                 for i in range(len(forward_ohlcv))
                                 if i - pattern_size >= 0
                             ]
@@ -399,3 +407,4 @@ fig.write_html(
     f"{out_root}/{out_data_root}/select_and_forward{source_file_name[:-4]}.html"
 )  # сохраняем в файл
 fig.show()
+torch.save(net.state_dict(), f"{out_root}/{out_data_root}/weights.pt")
