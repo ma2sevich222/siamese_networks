@@ -30,24 +30,24 @@ torch.backends.cudnn.deterministic = True
 """""" """""" """""" """""" """"" Parameters Block """ """""" """""" """""" """"""
 source = "source_root"
 out_root = "outputs"
-source_file_name = "GC_2020_2022_30min.csv"
-start_forward_time = "2021-03-24 23:30:00"
+source_file_name = "GC_2020_2022_60min.csv"
+start_forward_time = "2021-03-25 00:00:00"
 get_trade_info = True  # True если хотим сохранить сигналы, статистику и график торгов
-# run_mode = "best"
+
 profit_value = 0.003
 step = 0.1
-pattern_size_list = [20]
-extr_window_list = [100]
-overlap_list = [5]
-train_window_list = [4000]
-select_distance_list = [4000]
-forward_window_list = [9832]
+pattern_size_list = [60]
+extr_window_list = [150]
+overlap_list = [20]
+train_window_list = [1500]
+select_distance_list = [1500]
+forward_window_list = [154]
 
 """""" """""" """""" """""" """"" Net Parameters Block """ """""" """""" """""" """"""
 epochs = 12  # количество эпох
 lr = 0.000009470240447408595  # learnig rate
 embedding_dim = 160  # размер скрытого пространства
-margin = 20  # маржа для лосс функции
+margin = 3  # маржа для лосс функции
 batch_size = 150  # размер батчсайз #150
 distance_function = lambda x, y: 1.0 - F.cosine_similarity(x, y)
 final_stats_list = []
@@ -67,40 +67,38 @@ for train_window in tqdm(train_window_list):
                     for overlap in overlap_list:
 
                         df_for_split = df[
-                            (
-                                df.index
-                                >= forward_index - train_window - select_dist_window
-                            )
-                        ].copy()
+                            forward_index - train_window - select_dist_window :
+                        ]
                         df_for_split = df_for_split.reset_index(drop=True)
                         n_iters = (
-                            len(df_for_split)
-                            - sum([train_window, select_dist_window, forward_window])
-                        ) // forward_window
+                            len(df_for_split) - train_window - select_dist_window
+                        ) // int(forward_window)
 
-                        if n_iters < 1:
-                            n_iters = 1
                         signals = []
                         for n in range(n_iters):
-                            train_df = df_for_split.iloc[:train_window]
-                            test_df = df_for_split.iloc[
+                            train_df = df_for_split[:train_window]
+                            test_df = df_for_split[
                                 train_window : sum([train_window, select_dist_window])
                             ]
-                            forward_df = df_for_split.iloc[
+                            forward_df = df_for_split[
                                 sum([train_window, select_dist_window]) : sum(
-                                    [train_window, select_dist_window, forward_window]
+                                    [
+                                        train_window,
+                                        select_dist_window,
+                                        int(forward_window),
+                                    ]
                                 )
                             ]
-                            df_for_split = df_for_split.iloc[forward_window:]
+                            df_for_split = df_for_split[int(forward_window) :]
                             df_for_split = df_for_split.reset_index(drop=True)
                             train_df = train_df.reset_index(drop=True)
                             test_df = test_df.reset_index(drop=True)
                             forward_df = forward_df.reset_index(drop=True)
                             train_dates = pd.DataFrame(
-                                {"Datetime": train_df.Datetime.values}
+                                {"Datetime": train_df["Datetime"].values}
                             )
                             test_dates = pd.DataFrame(
-                                {"Datetime": test_df.Datetime.values}
+                                {"Datetime": test_df["Datetime"].values}
                             )
                             forward_dates = pd.DataFrame(
                                 {"Datetime": forward_df.Datetime.values}
@@ -363,6 +361,8 @@ final_stats_df.sort_values(by="Net Profit [$]", ascending=False).to_excel(
 df_plot = final_stats_df[
     [
         "Net Profit [$]",
+        "Sharpe Ratio",
+        "# Trades",
         "pattern_size",
         "extr_window",
         "overlap",
@@ -376,6 +376,8 @@ fig = px.parallel_coordinates(
     color="Net Profit [$]",
     labels={
         "Net Profit [$]": "Net Profit ($)",
+        "Sharpe Ratio": "Sharpe Ratio",
+        "# Trades": "Trades",
         "pattern_size": "pattern_size (bars)",
         "extr_window": "extr_window (bars)",
         "overlap": "overlap (bars)",

@@ -1,13 +1,20 @@
+#######################################################
+# Copyright © 2021-2099 Ekosphere. All rights reserved
+# Author: Evgeny Matusevich
+# Contacts: <ma2sevich222@gmail.com>
+# File: forward.py
+#######################################################
 import pandas as pd
 import plotly.express as px
 
-file_root = "outputs/CL_2020_2022_select_and_forward"
-filename = "intermediaCL_2020_2022_select_and_forward.xlsx"
+file_root = "outputs/GC_2020_2022_60min_select_and_forward"
+filename = "intermediaGC_2020_2022_60min_select_and_forward.xlsx"
 final_df = pd.read_excel(f"{file_root}/{filename}")  # загружаем результаты  анализа
 
 df_plot = final_df[
     [
         "Net Profit [$]",
+        "Sharpe Ratio",
         "# Trades",
         "pattern_size",
         "extr_window",
@@ -23,6 +30,7 @@ fig = px.parallel_coordinates(
     color="Net Profit [$]",
     labels={
         "Net Profit [$]": "Net Profit ($)",
+        "Sharpe Ratio": "Sharpe Ratio",
         "# Trades": "Trades",
         "pattern_size": "pattern_size (bars)",
         "extr_window": "extr_window (bars)",
