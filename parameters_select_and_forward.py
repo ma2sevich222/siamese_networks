@@ -171,6 +171,11 @@ for train_window in tqdm(train_window_list):
                                 eval_samples[0][0].shape[0],
                                 1,
                             )
+                            sampled_test_dates = [
+                                test_dates[i - pattern_size : i]
+                                for i in range(len(test_dates))
+                                if i - pattern_size >= 0
+                            ]
 
                             """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
                             """""" """""" """""" """""" """"" Test model  """ """""" """""" """""" """"""
@@ -210,7 +215,7 @@ for train_window in tqdm(train_window_list):
                                     buy_pred.append(float(net_pred.to("cpu").numpy()))
 
                                     date.append(
-                                        test_dates.Datetime[indexI + (pattern_size - 1)]
+                                        sampled_test_dates[indexI]["Datetime"].iat[-1]
                                     )
                                     open.append(float(eval_samples[indexI][-1, [0]]))
                                     high.append(float(eval_samples[indexI][-1, [1]]))
@@ -257,7 +262,11 @@ for train_window in tqdm(train_window_list):
                                 eval_samples[0][0].shape[0],
                                 1,
                             )
-
+                            sampled_forward_dates = [
+                                forward_dates[i - pattern_size : i]
+                                for i in range(len(forward_dates))
+                                if i - pattern_size >= 0
+                            ]
                             """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
                             """""" """""" """""" """""" """"" Forward model  """ """""" """""" """""" """"""
 
@@ -296,8 +305,8 @@ for train_window in tqdm(train_window_list):
                                     buy_pred.append(float(net_pred.to("cpu").numpy()))
 
                                     date.append(
-                                        forward_dates.Datetime[
-                                            indexI + (pattern_size - 1)
+                                        sampled_forward_dates[indexI]["Datetime"].iat[
+                                            -1
                                         ]
                                     )
                                     open.append(float(eval_samples[indexI][-1, [0]]))
