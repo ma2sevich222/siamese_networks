@@ -28,33 +28,35 @@ torch.backends.cudnn.deterministic = True
 source = "source_root"
 out_root = "outputs"
 source_file_name = "CL_2020_2022.csv"
-start_forward_time = "2021-01-03 23:00:00"
+start_forward_time = "2021-01-04 00:01:25"  # 357682 -41000
 get_trade_info = True  # True если хотим сохранить сигналы, статистику и график торгов
 profit_value = 0.003
 step = 0.1
-pattern_size_list = [500, 1000, 2000]
-extr_window_list = [1000, 2000, 500]
-overlap_list = [0]
-train_window_list = [150000]
-select_distance_list = [150000]
-forward_window_list = [112500, 225000]
+pattern_size_list = [i for i in range(20, 210, 10)]
+extr_window_list = [100, 150, 200, 300, 400]
+overlap_list = [0, 3, 6, 9, 12]
+train_window_list = [10000, 40000, 100000]
+select_distance_list = [10000, 40000, 100000]
+forward_window_list = [2000, 4000, 6000, 10000, 20000, 40000]
 
 
 """""" """""" """""" """""" """"" Net Parameters Block """ """""" """""" """""" """"""
 epochs = 12  # количество эпох
 lr = 0.000009470240447408595  # learnig rate
-embedding_dim = 160  # размер скрытого пространства
+embedding_dim = 200  # размер скрытого пространства
 margin = 1  # маржа для лосс функции
-batch_size = 150  # размер батчсайз
+batch_size = 250  # размер батчсайз
 distance_function = lambda x, y: 1.0 - F.cosine_similarity(x, y)
 final_stats_list = []
 out_data_root = f"{source_file_name[:-4]}_select_and_forward"
 os.mkdir(f"{out_root}/{out_data_root}")
 
 df = pd.read_csv(f"{source}/{source_file_name}")
+df = df[:410000]
+df = df[df.Volume != 0]
 forward_index = df[df["Datetime"] == start_forward_time].index[0]
 print(forward_index)
-
+runs = 0
 
 for train_window in tqdm(train_window_list):
     for select_dist_window in select_distance_list:
@@ -62,42 +64,42 @@ for train_window in tqdm(train_window_list):
             for pattern_size in pattern_size_list:
                 for extr_window in extr_window_list:
                     for overlap in overlap_list:
-
+                        runs += 1
                         df_for_split = df[
-                            (
-                                df.index
-                                >= forward_index - train_window - select_dist_window
-                            )
-                        ].copy()
+                            forward_index - train_window - select_dist_window :
+                        ]
                         df_for_split = df_for_split.reset_index(drop=True)
-                        n_iters = (len(df_for_split)) // forward_window
-
-                        if n_iters < 1:
-                            n_iters = 1
+                        n_iters = (
+                            len(df_for_split) - train_window - select_dist_window
+                        ) // int(forward_window)
                         signals = []
                         for n in range(n_iters):
-                            train_df = df_for_split.iloc[:train_window]
-                            test_df = df_for_split.iloc[
+                            train_df = df_for_split[:train_window]
+                            test_df = df_for_split[
                                 train_window : sum([train_window, select_dist_window])
                             ]
-                            forward_df = df_for_split.iloc[
+                            forward_df = df_for_split[
                                 sum([train_window, select_dist_window]) : sum(
-                                    [train_window, select_dist_window, forward_window]
+                                    [
+                                        train_window,
+                                        select_dist_window,
+                                        int(forward_window),
+                                    ]
                                 )
                             ]
-                            df_for_split = df_for_split.iloc[forward_window:]
+                            df_for_split = df_for_split[int(forward_window) :]
                             df_for_split = df_for_split.reset_index(drop=True)
                             train_df = train_df.reset_index(drop=True)
                             test_df = test_df.reset_index(drop=True)
                             forward_df = forward_df.reset_index(drop=True)
                             train_dates = pd.DataFrame(
-                                {"Datetime": train_df.Datetime.values}
+                                {"Datetime": train_df["Datetime"].tolist()}
                             )
                             test_dates = pd.DataFrame(
-                                {"Datetime": test_df.Datetime.values}
+                                {"Datetime": test_df["Datetime"].tolist()}
                             )
                             forward_dates = pd.DataFrame(
-                                {"Datetime": forward_df.Datetime.values}
+                                {"Datetime": forward_df.Datetime.tolist()}
                             )
                             del (
                                 train_df["Datetime"],
@@ -172,7 +174,11 @@ for train_window in tqdm(train_window_list):
                                 for i in range(len(eval_ohlcv))
                                 if i - pattern_size >= 0
                             ]
-
+                            sampled_test_dates = [
+                                test_dates[i - pattern_size : i]
+                                for i in range(len(test_dates))
+                                if i - pattern_size >= 0
+                            ]
                             """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
                             """""" """""" """""" """""" """"" Test model  """ """""" """""" """""" """"""
 
@@ -211,7 +217,7 @@ for train_window in tqdm(train_window_list):
                                     buy_pred.append(float(net_pred.to("cpu").numpy()))
 
                                     date.append(
-                                        test_dates.Datetime[indexI + (pattern_size - 1)]
+                                        sampled_test_dates[indexI]["Datetime"].iat[-1]
                                     )
                                     open.append(float(ohlcv_samples[indexI][-1, [0]]))
                                     high.append(float(ohlcv_samples[indexI][-1, [1]]))
@@ -264,6 +270,11 @@ for train_window in tqdm(train_window_list):
                                 for i in range(len(forward_ohlcv))
                                 if i - pattern_size >= 0
                             ]
+                            sampled_forward_dates = [
+                                forward_dates[i - pattern_size : i]
+                                for i in range(len(forward_dates))
+                                if i - pattern_size >= 0
+                            ]
 
                             """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
                             """""" """""" """""" """""" """"" Forward model  """ """""" """""" """""" """"""
@@ -303,8 +314,8 @@ for train_window in tqdm(train_window_list):
                                     buy_pred.append(float(net_pred.to("cpu").numpy()))
 
                                     date.append(
-                                        forward_dates.Datetime[
-                                            indexI + (pattern_size - 1)
+                                        sampled_forward_dates[indexI]["Datetime"].iat[
+                                            -1
                                         ]
                                     )
                                     open.append(
@@ -356,6 +367,7 @@ for train_window in tqdm(train_window_list):
                             source_file_name,
                             out_root,
                             out_data_root,
+                            runs,
                             get_trade_info=get_trade_info,
                         )
                         final_stats_list.append(df_stata)

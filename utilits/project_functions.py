@@ -269,7 +269,7 @@ def get_CLtrain_data(
     max_indexes = argrelmax(np.array(close_price), order=EXTR_WINDOW)[0]
     max_indexes = [i for i in max_indexes if i + EXTR_WINDOW <= len(data_df)]
 
-    prices = []
+    '''prices = []
     steps = [step for step in range(1, EXTR_WINDOW + 1)]
     for i in min_indexes:
         step_prices_for_ecach_idex = []
@@ -316,11 +316,11 @@ def get_CLtrain_data(
             if close_price[int(i) : int(i + (EXTR_WINDOW))][-1] - close_price[i] <= -(
                 close_price[i] * profit_value
             ):
-                indexes_lost_profit.append(i)
+                indexes_lost_profit.append(i)'''
 
     patterns = []
     CL_patterns = []
-    for ind in indexes_with_profit:
+    for ind in min_indexes:
         if ind - PATTERN_SIZE >= 0:
             patt = data_df[(ind - PATTERN_SIZE + OVERLAP) : ind + OVERLAP].to_numpy()
             CL_patt = data_df[
@@ -337,7 +337,7 @@ def get_CLtrain_data(
 
     sell_patterns = []
     CL_sell_patterns = []
-    for ind in indexes_lost_profit:
+    for ind in max_indexes:
         if ind - PATTERN_SIZE >= 0:
             patt = data_df[(ind - PATTERN_SIZE + OVERLAP) : ind + OVERLAP].to_numpy()
             CL_patt = data_df[
@@ -357,6 +357,8 @@ def get_CLtrain_data(
     n_samples_to_train = ((len(patterns) - 1) * len(sell_patterns)) + (
         (len(sell_patterns) - 1) * len(patterns)
     )
+    n_samples_to_train = n_samples_to_train // 2
+
     print(f"Количество уникальных триплетов = {n_samples_to_train}")
 
     """fig = go.Figure()  # x=data_df.index.tolist()
@@ -550,11 +552,11 @@ def get_signals(result_df, buy_before, sell_after):
     result_df.index = pd.to_datetime(result_df.index)
     result_df = result_df.sort_index()"""
     result_df["Signal"] = 0
-    print("******* Результы предсказания сети *******")
+    """print("******* Результы предсказания сети *******")
     print(result_df)
-    print()
+    print()'''
 
-    ''' """ Параметры тестирования """
+    """ """ Параметры тестирования """
     i = 0
     deposit = 400000  # сумма одного контракта GC & CL
     comm = 4.6  # GC - комиссия для золота
@@ -562,7 +564,7 @@ def get_signals(result_df, buy_before, sell_after):
     # sell_after = 1.6
     # buy_before = 0.6
     step = 0.1  # с каким шагом проводим тест разметки
-    # result_filename = f'{DESTINATION_ROOT}/selection_distances_{FILENAME[:-4]}_step{step}'''
+    # result_filename = f'{DESTINATION_ROOT}/selection_distances_{FILENAME[:-4]}_step{step}"""
 
     """ Тестирвоание """
 
@@ -693,6 +695,7 @@ def get_stat_after_forward(
     source_file_name,
     out_root,
     out_data_root,
+    runs,
     get_trade_info=False,
 ):
     plt_backtesting._MAX_CANDLES = 100_000
@@ -705,9 +708,9 @@ def get_stat_after_forward(
     result_df.index = pd.to_datetime(result_df.index)
     result_df = result_df.sort_index()
 
-    print("******* Результы предсказания сети *******")
+    """print("******* Результы предсказания сети *******")
     print(result_df)
-    print()
+    print()"""
 
     """ Параметры тестирования """
     i = 0
@@ -778,13 +781,13 @@ def get_stat_after_forward(
         bt.plot(
             plot_volume=True,
             relative_equity=False,
-            filename=f"{out_root}/{out_data_root}/bt_plot_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.html",
+            filename=f"{out_root}/{out_data_root}/{runs}_bt_plot_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.html",
         )
         stats.to_csv(
-            f"{out_root}/{out_data_root}/stats_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.txt"
+            f"{out_root}/{out_data_root}/{runs}_stats_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.txt"
         )
         result_df.to_csv(
-            f"{out_root}/{out_data_root}/signals_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.csv"
+            f"{out_root}/{out_data_root}/{runs}_signals_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.csv"
         )
 
     return df_stats
@@ -801,9 +804,9 @@ def find_best_dist_stbl(result_df, step):
     result_df.index = pd.to_datetime(result_df.index)
     result_df = result_df.sort_index()
     result_df["Signal"] = 0
-    print("******* Результы предсказания сети *******")
+    """print("******* Результы предсказания сети *******")
     print(result_df)
-    print()
+    print()"""
 
     """ Параметры тестирования """
     i = 0
@@ -919,9 +922,9 @@ def find_best_dist_stbl(result_df, step):
 def fliped_get_signals(result_df, sell_before, buy_after):
 
     result_df["Signal"] = 0
-    print("******* Результы предсказания сети *******")
+    """print("******* Результы предсказания сети *******")
     print(result_df)
-    print()
+    print()"""
 
     result_df["Signal"].where(~(result_df.Distance >= buy_after), 1, inplace=True)
     result_df["Signal"].where(~(result_df.Distance <= sell_before), -1, inplace=True)
@@ -1061,9 +1064,9 @@ def uptune_get_stat_after_forward(
     result_df.index = pd.to_datetime(result_df.index)
     result_df = result_df.sort_index()
 
-    print("******* Результы предсказания сети *******")
+    """print("******* Результы предсказания сети *******")
     print(result_df)
-    print()
+    print()"""
 
     """ Параметры тестирования """
     i = 0
@@ -1131,11 +1134,11 @@ def uptune_get_stat_after_forward(
     df_stats["profit_value"] = profit_value
     df_stats["overlap"] = OVERLAP
     if get_trade_info == True and df_stats["Net Profit [$]"].values > 0:
-        bt.plot(
+        """bt.plot(
             plot_volume=True,
             relative_equity=False,
             filename=f"{out_root}/{out_data_root}/{trial_namber}_bt_plot_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.html",
-        )
+        )"""
         stats.to_csv(
             f"{out_root}/{out_data_root}/{trial_namber}_stats_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.txt"
         )
