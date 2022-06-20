@@ -1134,11 +1134,11 @@ def uptune_get_stat_after_forward(
     df_stats["profit_value"] = profit_value
     df_stats["overlap"] = OVERLAP
     if get_trade_info == True and df_stats["Net Profit [$]"].values > 0:
-        """bt.plot(
+        bt.plot(
             plot_volume=True,
             relative_equity=False,
             filename=f"{out_root}/{out_data_root}/{trial_namber}_bt_plot_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.html",
-        )"""
+        )
         stats.to_csv(
             f"{out_root}/{out_data_root}/{trial_namber}_stats_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.txt"
         )
