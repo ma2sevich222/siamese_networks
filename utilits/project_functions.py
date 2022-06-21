@@ -22,43 +22,11 @@ def get_train_data(
     data_df, profit_value, EXTR_WINDOW, PATTERN_SIZE, OVERLAP, train_dates
 ):
     close_price = data_df["Close"].values.tolist()
-    train_dates = train_dates.Datetime.values
 
     min_indexes = argrelmin(np.array(close_price), order=EXTR_WINDOW)[0]
     min_indexes = [i for i in min_indexes if i + EXTR_WINDOW <= len(data_df)]
     max_indexes = argrelmax(np.array(close_price), order=EXTR_WINDOW)[0]
     max_indexes = [i for i in max_indexes if i + EXTR_WINDOW <= len(data_df)]
-
-    """prices = []
-    steps = [step for step in range(1, EXTR_WINDOW + 1)]
-    for i in min_indexes:
-        step_prices_for_ecach_idex = []
-        for step in steps:
-            growth_price = (close_price[(i + step)] - close_price[i]) / close_price[i]
-            step_prices_for_ecach_idex.append(growth_price)
-        prices.append(step_prices_for_ecach_idex)
-    squares_df = pd.DataFrame()
-    for colname, vlue_col in zip(min_indexes, prices):
-        squares_df[f"{str(colname)}"] = vlue_col
-    axey = squares_df.mean(axis=1).values.tolist()
-
-    conf_intervals = []
-
-    for r in range(len(squares_df)):
-        values_arr = squares_df.iloc[r, :].to_numpy()
-        std_ = np.std(values_arr) / 2
-        conf_intervals.append(std_)"""
-
-    """fig = go.Figure()
-
-    fig = px.bar(x=[f' Бар : {i} ' for i in steps], y=axey, error_y=conf_intervals)
-    fig.update_layout(
-        title=dict(
-            text=f" Прирост цены в  взависимости от удаления от паттерна с доверительными интервалами для 95% данных. Параметры : profit_value = {profit_value}, EXTR_WINDOW = {EXTR_WINDOW}, PATTERN_SIZE,OVERLAP = {OVERLAP} ",
-            font=dict(size=15)),
-        xaxis_title="Бары",
-        yaxis_title="Величина прироста в долях")
-    fig.show()"""
 
     indexes_with_profit = []
     for i in min_indexes:
@@ -107,20 +75,6 @@ def get_train_data(
         (len(sell_patterns) - 1) * len(patterns)
     )
     print(f"Количество уникальных триплетов = {n_samples_to_train}")
-
-    """fig = go.Figure()  # x=data_df.index.tolist()
-    fig.add_trace(go.Scatter(x=train_dates, y=data_df['Close'], mode='lines', name='CLOSE'))
-    fig.add_trace(go.Scatter(x=train_dates[indexes_with_profit], y=data_df['Close'].iloc[indexes_with_profit],
-                             mode='markers',
-                             marker=dict(symbol='triangle-up', size=15, color='green')))
-    fig.add_trace(go.Scatter(x=train_dates[indexes_lost_profit], y=data_df['Close'].iloc[indexes_lost_profit],
-                             mode='markers',
-                             marker=dict(symbol='triangle-down', size=15, color='red')))
-
-    fig.update_layout(
-        title=f'Разметка данных на основе параметров profit_value = {profit_value}, EXTR_WINDOW = {EXTR_WINDOW}, PATTERN_SIZE = {PATTERN_SIZE}  ',
-        xaxis_title='DATE', yaxis_title='CLOSE', legend_title='Legend')
-    fig.show()"""
 
     scaler = StandardScaler()
     std_patterns = np.array([scaler.fit_transform(i) for i in patterns]).reshape(
