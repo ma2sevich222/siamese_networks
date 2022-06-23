@@ -263,10 +263,7 @@ study.optimize(objective, n_trials=n_trials)
 
 
 tune_results = study.trials_dataframe()
-"""tune_results = tune_results.rename(
-    columns={"values_0": "Net_profit [$]", "values_1": "Sharpe_Ratio"}
-)
-print(tune_results)"""
+
 tune_results["params_forward_window"] = tune_results["params_forward_window"].astype(
     int
 )
