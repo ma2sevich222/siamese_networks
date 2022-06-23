@@ -109,7 +109,7 @@ def get_triplet_random(batch_size, nb_classes, data):
 
     w, h, c = X[0][0].shape
 
-    # initialize result
+    # создаем массив будущих триплетов
     triplets = [np.zeros((batch_size, w, h, c)) for i in range(int(3))]
     labels = []
 

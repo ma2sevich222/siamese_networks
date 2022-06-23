@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import torch
+from datetime import date
 import os
 import random
 from sklearn.preprocessing import StandardScaler
@@ -28,6 +29,9 @@ np.random.seed(2020)
 random.seed(2020)
 torch.backends.cudnn.deterministic = True
 """""" """""" """""" """""" """"" Parameters Block """ """""" """""" """""" """"""
+
+today = date.today()
+date_xprmnt = today.strftime("%d_%m_%Y")
 source = "source_root"
 out_root = "outputs"
 source_file_name = "GC_2020_2022_30min.csv"
@@ -52,7 +56,7 @@ batch_size = 20  # размер батчсайз
 distance_function = lambda x, y: 1.0 - F.cosine_similarity(x, y)
 final_stats_list = []
 
-out_data_root = f"{source_file_name[:-4]}_forward"
+out_data_root = f"V2_{source_file_name[:-4]}_{date_xprmnt}_forward"
 os.mkdir(f"{out_root}/{out_data_root}")
 
 df = pd.read_csv(f"{source}/{source_file_name}")
@@ -130,7 +134,7 @@ for train_window in tqdm(train_window_list):
                         net = shotSiameseNetwork(embedding_dim=embedding_dim).cuda()
                         torch.cuda.empty_cache()
                         train_triplet_net(
-                            lr, epochs, my_dataloader, net, distance_function
+                            lr, epochs, my_dataloader, net, distance_function, margin
                         )
 
                         """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
@@ -213,7 +217,7 @@ for train_window in tqdm(train_window_list):
                                     Signal.append(-1)
 
                                 date.append(
-                                    forward_dates.Datetime[indexI + (pattern_size - 1)]
+                                    sampled_forward_dates[indexI]["Datetime"].iat[-1]
                                 )
                                 open.append(float(eval_samples[indexI][-1, [0]]))
                                 high.append(float(eval_samples[indexI][-1, [1]]))
