@@ -7,7 +7,7 @@
 import pandas as pd
 import plotly.express as px
 
-file_root = "outputs/CL_2020_2022_CL_data_optune_18_06_2022_epoch_500"
+"""file_root = "outputs/CL_2020_2022_CL_data_optune_18_06_2022_epoch_500"
 filename = "intermedia_CL_2020_2022.xlsx"
 final_df = pd.read_excel(f"{file_root}/{filename}")  # загружаем результаты  анализа
 
@@ -45,10 +45,10 @@ fig = px.parallel_coordinates(
 )
 
 fig.write_html(f"hyp_parameters_sel_{filename[:-4]}.htm")  # сохраняем в файл
-fig.show()
+fig.show()"""
 
 
-"""file_root = "outputs/CL_2020_2022_CL_data_optune_18_06_2022_epoch_500"
+file_root = "outputs/V2_CL_2020_2022_CL_data_optune_24_06_2022_epoch_100"
 filename = "intermedia_CL_2020_2022.xlsx"
 final_df = pd.read_excel(f"{file_root}/{filename}")  # загружаем результаты  анализа
 
@@ -56,6 +56,7 @@ df_plot = final_df[
     [
         "values_0",
         "values_1",
+        "# Trades",
         "pattern_size",
         "extr_window",
         "overlap",
@@ -71,6 +72,7 @@ fig = px.parallel_coordinates(
     labels={
         "values_0": "Net Profit ($)",
         "values_1": "Sharpe Ratio",
+        "# Trades": "Trades",
         "pattern_size": "pattern_size (bars)",
         "extr_window": "extr_window (bars)",
         "overlap": "overlap (bars)",
@@ -80,8 +82,10 @@ fig = px.parallel_coordinates(
     },
     range_color=[df_plot["values_0"].min(), df_plot["values_0"].max()],
     color_continuous_scale=px.colors.sequential.Viridis,
-    title=f"hyp_parameters_select_{filename[:-4]}_500_epochs",
+    title=f"V2_hyp_parameters_select_{filename[:-4]}_100_epochs",
 )
 
-fig.write_html(f"hyp_parameters_sel_{filename[:-4]}.htm")  # сохраняем в файл
-fig.show()"""
+fig.write_html(
+    f"V2_hyp_parameters_select_{filename[:-4]}_100_epochs.htm"
+)  # сохраняем в файл
+fig.show()

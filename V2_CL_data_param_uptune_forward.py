@@ -38,7 +38,7 @@ source = "source_root"
 out_root = "outputs"
 source_file_name = "CL_2020_2022.csv"
 out_data_root = (
-    f"V1_{source_file_name[:-4]}_CL_data_optune_{date_xprmnt}_epoch_{n_trials}"
+    f"V2_{source_file_name[:-4]}_CL_data_optune_{date_xprmnt}_epoch_{n_trials}"
 )
 os.mkdir(f"{out_root}/{out_data_root}")
 intermedia = pd.DataFrame()
@@ -77,7 +77,7 @@ def objective(trial):
     pattern_size = trial.suggest_int("pattern_size", 10, 700)
     overlap = trial.suggest_int("overlap", 0, 50)
     train_window = trial.suggest_categorical(
-        "train_window", ["10000", "40000", "120000"]
+        "train_window", ["10000", "40000", "120000", "240000"]
     )
     select_dist_window = trial.suggest_categorical(
         "select_dist_window", ["10000", "40000", "120000"]
@@ -86,34 +86,30 @@ def objective(trial):
         "forward_window", ["2000", "10000", "40000", "240000"]
     )
 
-    df_for_split = df[forward_index - int(train_window) - int(select_dist_window) :]
+    df_for_split = df[(df.index >= forward_index - int(train_window))]
     df_for_split = df_for_split.reset_index(drop=True)
+    n_iters = (len(df_for_split) - int(train_window)) // int(forward_window)
+
+    if n_iters < 1:
+        n_iters = 1
+
     signals = []
-    n_iters = (len(df_for_split) - int(train_window) - int(select_dist_window)) // int(
-        forward_window
-    )
     for n in range(n_iters):
 
         train_df = df_for_split[: int(train_window)]
-        test_df = df_for_split[
-            int(train_window) : sum([int(train_window), int(select_dist_window)])
-        ]
+
         forward_df = df_for_split[
-            sum([int(train_window), int(select_dist_window)]) : sum(
-                [int(train_window), int(select_dist_window), int(forward_window)]
-            )
+            int(train_window) : sum([int(train_window), int(forward_window)])
         ]
         df_for_split = df_for_split[int(forward_window) :]
         df_for_split = df_for_split.reset_index(drop=True)
         train_df = train_df.reset_index(drop=True)
-        test_df = test_df.reset_index(drop=True)
         forward_df = forward_df.reset_index(drop=True)
-        train_dates = pd.DataFrame({"Datetime": train_df["Datetime"].values})
-        test_dates = pd.DataFrame({"Datetime": test_df["Datetime"].values})
+        train_dates = pd.DataFrame({"Datetime": train_df.Datetime.values})
+
         forward_dates = pd.DataFrame({"Datetime": forward_df.Datetime.values})
         del (
             train_df["Datetime"],
-            test_df["Datetime"],
             forward_df["Datetime"],
         )
 
@@ -143,88 +139,6 @@ def objective(trial):
 
         """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
         """""" """""" """""" """""" """"" Test data prepare  """ """""" """""" """""" """"""
-        eval_array = test_df[
-            [
-                "DiffEMA",
-                "SmoothDiffEMA",
-                "VolatilityTunnel",
-                "BuyIntense",
-                "SellIntense",
-            ]
-        ].to_numpy()
-        eval_samples = [
-            eval_array[i - pattern_size : i]
-            for i in range(len(eval_array))
-            if i - pattern_size >= 0
-        ]
-        eval_ohlcv = test_df[["Open", "High", "Low", "Close", "Volume"]].to_numpy()
-
-        ohlcv_samples = [
-            eval_ohlcv[i - pattern_size : i]
-            for i in range(len(eval_ohlcv))
-            if i - pattern_size >= 0
-        ]
-        sampled_test_dates = [
-            test_dates[i - pattern_size : i]
-            for i in range(len(test_dates))
-            if i - pattern_size >= 0
-        ]
-        """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
-        """""" """""" """""" """""" """"" Test model  """ """""" """""" """""" """"""
-
-        date = []
-        open = []
-        high = []
-        low = []
-        close = []
-        volume = []
-        buy_pred = []
-        train_data_shape = []
-
-        net.eval()
-        with torch.no_grad():
-            for indexI, eval_arr in enumerate(eval_samples):
-                anchor = train_x[0][0].reshape(
-                    1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1,
-                )
-                eval_arr_r = eval_arr.reshape(
-                    1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1,
-                )
-                anchor = torch.Tensor(anchor)
-                eval_arr_r = torch.Tensor(eval_arr_r)
-                output1, output2, output3 = net(
-                    anchor.cuda().permute(0, 3, 1, 2),
-                    eval_arr_r.cuda().permute(0, 3, 1, 2),
-                    eval_arr_r.cuda().permute(0, 3, 1, 2),
-                )
-                net_pred = distance_function(output1, output3)
-                buy_pred.append(float(net_pred.to("cpu").numpy()))
-
-                date.append(sampled_test_dates[indexI]["Datetime"].iat[-1])
-                open.append(float(ohlcv_samples[indexI][-1, [0]]))
-                high.append(float(ohlcv_samples[indexI][-1, [1]]))
-                low.append(float(ohlcv_samples[indexI][-1, [2]]))
-                close.append(float(ohlcv_samples[indexI][-1, [3]]))
-                volume.append(float(ohlcv_samples[indexI][-1, [4]]))
-                train_data_shape.append(float(train_df.shape[0]))
-
-        test_result = pd.DataFrame(
-            {
-                "Datetime": date,
-                "Open": open,
-                "High": high,
-                "Low": low,
-                "Close": close,
-                "Volume": volume,
-                "Distance": buy_pred,
-                "Train_shape": train_data_shape,
-            }
-        )
-
-        buy_before, sell_after = find_best_dist_stbl(test_result, step)
-
-        print(f"BUY BEFORE = {buy_before}")
-        print(f"SELL AFTER = {sell_after}")
 
         """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
         """""" """""" """""" """""" """"" Forward data prepare  """ """""" """""" """""" """"""
@@ -264,27 +178,45 @@ def objective(trial):
         low = []
         close = []
         volume = []
-        buy_pred = []
+        Signal = []
         train_data_shape = []
 
         net.eval()
         with torch.no_grad():
             for indexI, eval_arr in enumerate(forward_samples):
-                anchor = train_x[0][0].reshape(
-                    1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1,
+                buy_anchor = train_x[0][0].reshape(
+                    1, forward_samples[0].shape[0], forward_samples[0][0].shape[0], 1,
+                )
+                sell_anchor = train_x[1][0].reshape(
+                    1, forward_samples[0].shape[0], forward_samples[0][0].shape[0], 1,
                 )
                 eval_arr_r = eval_arr.reshape(
-                    1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1,
+                    1, forward_samples[0].shape[0], forward_samples[0][0].shape[0], 1,
                 )
-                anchor = torch.Tensor(anchor)
+
+                buy_anchor = torch.Tensor(buy_anchor)
+                sell_anchor = torch.Tensor(sell_anchor)
                 eval_arr_r = torch.Tensor(eval_arr_r)
                 output1, output2, output3 = net(
-                    anchor.cuda().permute(0, 3, 1, 2),
+                    buy_anchor.cuda().permute(0, 3, 1, 2),
                     eval_arr_r.cuda().permute(0, 3, 1, 2),
-                    eval_arr_r.cuda().permute(0, 3, 1, 2),
+                    sell_anchor.cuda().permute(0, 3, 1, 2),
                 )
-                net_pred = distance_function(output1, output3)
-                buy_pred.append(float(net_pred.to("cpu").numpy()))
+                buy_pred = distance_function(output1, output2)
+                buy_pred = float(buy_pred.to("cpu").numpy())
+                output1, output2, output3 = net(
+                    sell_anchor.cuda().permute(0, 3, 1, 2),
+                    eval_arr_r.cuda().permute(0, 3, 1, 2),
+                    buy_anchor.cuda().permute(0, 3, 1, 2),
+                )
+
+                sell_pred = distance_function(output1, output2)
+                sell_pred = float(sell_pred.to("cpu").numpy())
+
+                if buy_pred < sell_pred:
+                    Signal.append(1)
+                if buy_pred > sell_pred:
+                    Signal.append(-1)
 
                 date.append(sampled_forward_dates[indexI]["Datetime"].iat[-1])
                 open.append(float(ohlcv_forward_samples[indexI][-1, [0]]))
@@ -294,21 +226,20 @@ def objective(trial):
                 volume.append(float(ohlcv_forward_samples[indexI][-1, [4]]))
                 train_data_shape.append(float(train_df.shape[0]))
 
-        forward_result = pd.DataFrame(
-            {
-                "Datetime": date,
-                "Open": open,
-                "High": high,
-                "Low": low,
-                "Close": close,
-                "Volume": volume,
-                "Distance": buy_pred,
-                "Train_shape": train_data_shape,
-            }
-        )
+            forward_result = pd.DataFrame(
+                {
+                    "Datetime": date,
+                    "Open": open,
+                    "High": high,
+                    "Low": low,
+                    "Close": close,
+                    "Volume": volume,
+                    "Signal": Signal,
+                    "Train_shape": train_data_shape,
+                }
+            )
 
-        signal = get_signals(forward_result, buy_before, sell_after)
-        signals.append(signal)
+    signals.append(forward_result)
 
     signals_combained = pd.concat(signals, ignore_index=True, sort=False)
 
@@ -376,7 +307,6 @@ df_plot = tune_results[
         "params_extr_window",
         "params_overlap",
         "params_train_window",
-        "params_select_dist_window",
         "params_forward_window",
     ]
 ]
@@ -392,16 +322,15 @@ fig = px.parallel_coordinates(
         "params_extr_window": "extr_window (bars)",
         "params_overlap": "overlap (bars)",
         "params_train_window": "train_window (bars)",
-        "params_select_dist_window": "select_dist_window (bars)",
         "params_forward_window": "forward_window (bars)",
     },
     range_color=[df_plot["values_0"].min(), df_plot["values_0"].max()],
     color_continuous_scale=px.colors.sequential.Viridis,
-    title=f"V1_hyp_parameters_select_{source_file_name[:-4]}_optune_epoch_{n_trials}",
+    title=f"V2_hyp_parameters_select_{source_file_name[:-4]}_optune_epoch_{n_trials}",
 )
 
 fig.write_html(f"{out_root}/{out_data_root}/hyp_par_sel_{source_file_name[:-4]}.htm")
 fig.show()
 tune_results.to_excel(
-    f"{out_root}/{out_data_root}/V1_hyp_par_sel_{source_file_name[:-4]}.xlsx"
+    f"{out_root}/{out_data_root}/V2_hyp_par_sel_{source_file_name[:-4]}.xlsx"
 )

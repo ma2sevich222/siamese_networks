@@ -272,11 +272,10 @@ def get_CLtrain_data(
             ):
                 indexes_lost_profit.append(i)'''
 
-    patterns = []
     CL_patterns = []
     for ind in min_indexes:
         if ind - PATTERN_SIZE >= 0:
-            patt = data_df[(ind - PATTERN_SIZE + OVERLAP) : ind + OVERLAP].to_numpy()
+
             CL_patt = data_df[
                 [
                     "DiffEMA",
@@ -286,15 +285,14 @@ def get_CLtrain_data(
                     "SellIntense",
                 ]
             ][(ind - PATTERN_SIZE + OVERLAP) : ind + OVERLAP].to_numpy()
-            patterns.append(patt)
+
             CL_patterns.append(CL_patt)
 
-    sell_patterns = []
     CL_sell_patterns = []
     for ind in max_indexes:
         if ind - PATTERN_SIZE >= 0:
-            patt = data_df[(ind - PATTERN_SIZE + OVERLAP) : ind + OVERLAP].to_numpy()
-            CL_patt = data_df[
+
+            CL_sell_patt = data_df[
                 [
                     "DiffEMA",
                     "SmoothDiffEMA",
@@ -303,15 +301,19 @@ def get_CLtrain_data(
                     "SellIntense",
                 ]
             ][(ind - PATTERN_SIZE + OVERLAP) : ind + OVERLAP].to_numpy()
-            sell_patterns.append(patt)
-            CL_sell_patterns.append(CL_patt)
 
-    print(f"Найдено паттернов класса buy = {len(patterns)}")
-    print(f"Найдено паттернов класса sell = {len(sell_patterns)}")
-    n_samples_to_train = ((len(patterns) - 1) * len(sell_patterns)) + (
-        (len(sell_patterns) - 1) * len(patterns)
-    )
-    n_samples_to_train = n_samples_to_train // 2
+            CL_sell_patterns.append(CL_sell_patt)
+
+    if len(CL_patterns) < 2:
+        CL_patterns.append(CL_patterns[0])
+    if len(CL_sell_patterns) < 2:
+        CL_sell_patterns.append(CL_sell_patterns[0])
+
+    print(f"Найдено паттернов класса buy = {len(CL_patterns)}")
+    print(f"Найдено паттернов класса sell = {len(CL_sell_patterns)}")
+    n_samples_to_train = len(CL_patterns) * len(CL_sell_patterns)
+
+    # n_samples_to_train = n_samples_to_train // 2
 
     print(f"Количество уникальных триплетов = {n_samples_to_train}")
 
@@ -333,7 +335,7 @@ def get_CLtrain_data(
     std_patterns = np.array([scaler.fit_transform(i) for i in patterns]).reshape(-1, PATTERN_SIZE,
                                                                                  len(data_df.columns.to_list()), 1)
     std_sell_patterns = np.array([scaler.fit_transform(i) for i in sell_patterns]).reshape(-1, PATTERN_SIZE,
-                                                                                           len(data_df.columns.to_list()),
+                                                                                   len(data_df.columns.to_list()),
                                                                                            1)"""
 
     CL_patterns = np.array(CL_patterns).reshape(
@@ -371,7 +373,7 @@ def get_CLtrain_data(
 
     # train_x = [std_patterns, std_sell_patterns]
     train_x = [CL_patterns, CL_sell_patterns]
-    if len(patterns) == len(sell_patterns):
+    if len(CL_patterns) == len(CL_sell_patterns):
         train_x = np.array(train_x)
 
     else:
@@ -1088,11 +1090,11 @@ def uptune_get_stat_after_forward(
     df_stats["profit_value"] = profit_value
     df_stats["overlap"] = OVERLAP
     if get_trade_info == True and df_stats["Net Profit [$]"].values > 0:
-        bt.plot(
+        """bt.plot(
             plot_volume=True,
             relative_equity=False,
             filename=f"{out_root}/{out_data_root}/{trial_namber}_bt_plot_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.html",
-        )
+        )"""
         stats.to_csv(
             f"{out_root}/{out_data_root}/{trial_namber}_stats_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.txt"
         )
