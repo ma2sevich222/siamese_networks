@@ -7,19 +7,15 @@ import random
 from sklearn.preprocessing import StandardScaler
 from torch.nn import functional as F
 from torch.utils.data import TensorDataset, DataLoader
-from tqdm import trange, tqdm
-from models.torch_models import shotSiameseNetwork, simpleSiameseNetwork
-from utilits.data_load import data_load_OHLCV, data_load_CL
+from tqdm import tqdm
+from models.torch_models import shotSiameseNetwork
 from utilits.project_functions import (
     get_train_data,
     get_triplet_random,
     train_triplet_net,
-    get_CLtrain_data,
     get_stat_after_forward,
     find_best_dist_stbl,
     get_signals,
-    fliped_get_signals,
-    fliped_find_best_dist_stbl,
 )
 
 torch.manual_seed(2020)

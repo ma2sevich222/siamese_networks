@@ -199,7 +199,7 @@ def train_triplet_net(lr, epochs, my_dataloader, net, distance_function, margin)
     return l, last_epoch_loss
 
 
-def l_infinity(x1, x2):
+"""def l_infinity(x1, x2):
     return torch.max(torch.abs(x1 - x2), dim=1).values
 
 
@@ -209,7 +209,7 @@ def euclid_dist(x1, x2):
 
 def manhatten_dist(x1, x2):
     dif_tnzr = x1 - x2
-    return torch.sum(torch.abs(dif_tnzr))
+    return torch.sum(torch.abs(dif_tnzr))"""
 
 
 def get_CLtrain_data(
@@ -382,7 +382,7 @@ def get_CLtrain_data(
     return train_x, n_samples_to_train
 
 
-def find_best_dist(result_df, step):
+'''def find_best_dist(result_df, step):
     plt_backtesting._MAX_CANDLES = 100_000
     pd.pandas.set_option("display.max_columns", None)
     pd.set_option("expand_frame_repr", False)
@@ -494,7 +494,7 @@ def find_best_dist(result_df, step):
     # fig.write_html("1min_gold_dep_analisys.html")  # сохраняем в файл
     fig.show()"""
 
-    return buy_before, sell_after
+    return buy_before, sell_after'''
 
 
 def get_signals(result_df, buy_before, sell_after):
@@ -559,7 +559,7 @@ def get_signals(result_df, buy_before, sell_after):
     return result_df
 
 
-def forward_trade(
+'''def forward_trade(
     result_df,
     DESTINATION_ROOT,
     FILENAME,
@@ -592,9 +592,9 @@ def forward_trade(
     # sell_after = 1.6
     # buy_before = 0.6
     # step = 0.1  # с каким шагом проводим тест разметки
-    # result_filename = f'{DESTINATION_ROOT}/selection_distances_{FILENAME[:-4]}_step{step}'''
+    # result_filename = f'{DESTINATION_ROOT}/selection_distances_{FILENAME[:-4]}_step{step}
 
-    """ Тестирвоание """
+   
 
     out_root = f"{FILENAME[:-4]}_forward_run_begin_{result_df.index[0]}_end_{result_df.index[-1]}_({train_window / 1000}k_{select_dist_window / 1000}k_{forward_window / 1000}k_)"
     os.mkdir(f"{DESTINATION_ROOT}/{out_root}")
@@ -626,7 +626,7 @@ def forward_trade(
         f"{DESTINATION_ROOT}/{out_root}/forward_stats_{FILENAME[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.txt"
     )
 
-    """df_stats = df_stats.append(stats, ignore_index=True)
+    df_stats = df_stats.append(stats, ignore_index=True)
     df_stats.loc[i, 'Net Profit [$]'] = df_stats.loc[i, 'Equity Final [$]'] - deposit - df_stats.loc[
             i, '# Trades'] * comm
     df_stats.loc[i, 'buy_before'] = buy_before * step
@@ -635,8 +635,8 @@ def forward_trade(
     df_stats.loc[i, 'pattern_size'] = PATTERN_SIZE
     df_stats.loc[i, 'extr_window'] = EXTR_WINDOW
     df_stats.loc[i, 'profit_value'] = profit_value
-    df_stats.loc[i, 'overlap'] = OVERLAP"""
-    print("ФОРВАРДНЫЙ АНАЛИЗ ОКОНЧЕН")
+    df_stats.loc[i, 'overlap'] = OVERLAP
+    print("ФОРВАРДНЫЙ АНАЛИЗ ОКОНЧЕН")'''
 
 
 def get_stat_after_forward(
@@ -875,7 +875,7 @@ def find_best_dist_stbl(result_df, step):
     return buy_before, sell_after
 
 
-def fliped_get_signals(result_df, sell_before, buy_after):
+'''def fliped_get_signals(result_df, sell_before, buy_after):
 
     result_df["Signal"] = 0
     """print("******* Результы предсказания сети *******")
@@ -992,7 +992,7 @@ def fliped_find_best_dist_stbl(result_df, step):
     sell_before = df_stats.loc[df_stats.index[0], "sell_before"]
     buy_after = df_stats.loc[df_stats.index[0], "buy_after"]
 
-    return sell_before, buy_after
+    return sell_before, buy_after'''
 
 
 def uptune_get_stat_after_forward(

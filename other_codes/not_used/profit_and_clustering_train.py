@@ -10,7 +10,7 @@ from torch.utils.data import TensorDataset, DataLoader
 from tqdm import tqdm
 from sklearn.cluster import SpectralClustering
 from models.torch_models import SiameseNetwork
-from utilits.data_load import test_data_load
+from other_codes.not_used.data_load import test_data_load
 from utilits.data_transforms import patterns_to_df
 from other_codes.old_project.old_utilits.triplet_func_for_train import (
     get_triplet_random,

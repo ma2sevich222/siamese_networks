@@ -8,7 +8,7 @@ from tqdm import tqdm
 import random
 from utilits.torch_functions_for_train import train_net, cos_em_create_pairs
 from models.torch_models import SiameseNetwork
-from utilits.data_load import data_load
+from other_codes.not_used.data_load import data_load
 from other_codes.old_project.old_utilits.functions_for_train_nn import (
     get_locals,
     get_patterns,

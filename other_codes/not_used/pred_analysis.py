@@ -5,7 +5,7 @@
 ##################################################################################
 
 import pandas as pd
-from utilits.visuals_functions import plot_prediction
+from other_codes.not_used.visuals_functions import plot_prediction
 
 pd.pandas.set_option("display.max_columns", None)
 pd.set_option("expand_frame_repr", False)

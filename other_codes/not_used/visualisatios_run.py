@@ -11,7 +11,7 @@ from utilits.visualisation_functios import (
     plot_nearlist_patterns,
     patterns_heatmap,
 )
-from utilits.data_load import data_load
+from other_codes.not_used.data_load import data_load
 
 pio.renderers.default = "browser"
 

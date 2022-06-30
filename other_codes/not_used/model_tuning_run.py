@@ -5,23 +5,19 @@
 ##################################################################################
 
 import numpy as np
-import pandas as pd
 import torch
-from sklearn.preprocessing import StandardScaler
 from torch.nn import functional as F
 from torch.utils.data import TensorDataset, DataLoader
-from tqdm import tqdm
 from constants import *
 from models.torch_models import SiameseNetwork
 from utilits.project_functions import (
     get_train_data,
     get_triplet_random,
     train_triplet_net,
-    euclid_dist,
 )
 
 import optuna
-from utilits.data_load import data_load_OHLCV
+from other_codes.not_used.data_load import data_load_OHLCV
 
 """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
 """""" """""" """""" """""" """"" Parameters Block """ """""" """""" """""" """"""

@@ -17,7 +17,7 @@ from other_codes.old_project.old_utilits.triplet_func_for_train import train_tri
 
 from utilits.data_transforms import patterns_to_df
 from utilits.visualisation_functios import calculate_cos_dist
-from utilits.data_load import data_load
+from other_codes.not_used.data_load import data_load
 
 from constants import *
 

@@ -26,12 +26,11 @@ from constants import (
     TRAIN_WINDOW,
 )
 from models.torch_models import shotSiameseNetwork
-from utilits.data_load import data_load_OHLCV, data_load_CL
+from other_codes.not_used.data_load import data_load_OHLCV
 from utilits.project_functions import (
     get_train_data,
     get_triplet_random,
     train_triplet_net,
-    get_CLtrain_data,
 )
 
 torch.cuda.empty_cache()

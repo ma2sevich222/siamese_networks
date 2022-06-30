@@ -7,7 +7,7 @@ from torch.utils.data import TensorDataset, DataLoader
 from tqdm import tqdm
 from sklearn.preprocessing import normalize
 from models.torch_models import SiameseNetwork_extend_triplet
-from utilits.data_load import data_load
+from other_codes.not_used.data_load import data_load
 from other_codes.old_project.old_utilits.functions_for_train_nn import (
     get_locals,
     get_patterns,

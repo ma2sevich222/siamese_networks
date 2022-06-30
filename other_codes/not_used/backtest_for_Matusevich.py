@@ -5,10 +5,9 @@
 ##################################################################################
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot as plt
 from backtesting import Backtest
 import backtesting._plotting as plt_backtesting
-from tqdm import trange, tqdm
+from tqdm import trange
 import os
 from utilits.lazy_strategy import LazyStrategy
 
@@ -22,7 +21,6 @@ from constants import (
 )
 
 # from utilits.strategies_Chekh import Long_n_Short_Strategy as LnS
-from utilits.strategies_AT import Long_n_Short_Strategy_Float as LnSF
 
 # from utilits.strategies_hold_long_short_ import Long_n_Short_Strategy as LnSS
 

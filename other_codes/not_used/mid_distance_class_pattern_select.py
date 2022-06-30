@@ -8,7 +8,7 @@ from torch.utils.data import TensorDataset, DataLoader
 from tqdm import tqdm
 from utilits.visualisation_functios import named_patterns_heatmap
 from models.torch_models import SiameseNetwork_extend_triplet
-from utilits.data_load import data_load
+from other_codes.not_used.data_load import data_load
 from utilits.data_transforms import patterns_to_df
 from other_codes.old_project.old_utilits.functions_for_train_nn import (
     get_locals,

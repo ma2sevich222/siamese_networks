@@ -22,7 +22,7 @@ from other_codes.old_project.old_utilits.losses import (
     accuracy,
 )
 from keras.models.base_net import create_base_net
-from utilits.data_load import data_load
+from other_codes.not_used.data_load import data_load
 
 import numpy as np
 import pandas as pd

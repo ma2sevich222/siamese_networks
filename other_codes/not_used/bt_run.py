@@ -11,10 +11,9 @@ import pandas as pd
 import plotly.express as px
 import torch
 from backtesting import Backtest
-from sklearn.preprocessing import StandardScaler
 from torch.nn import functional as F
 from torch.utils.data import TensorDataset, DataLoader
-from tqdm import trange, tqdm
+from tqdm import tqdm
 from constants import (
     SOURCE_ROOT,
     DESTINATION_ROOT,
@@ -25,16 +24,15 @@ from constants import (
     END_TEST,
 )
 from models.torch_models import shotSiameseNetwork
-from utilits.data_load import data_load_OHLCV, data_load_CL
+from other_codes.not_used.data_load import data_load_CL
 from utilits.project_functions import (
-    get_train_data,
     get_triplet_random,
     train_triplet_net,
     get_CLtrain_data,
 )
 
 # from utilits.strategies_Chekh import Long_n_Short_Strategy as LnS
-from utilits.strategies_AT import Long_n_Short_Strategy_Float as LnSF
+from other_codes.not_used.strategies_AT import Long_n_Short_Strategy_Float as LnSF
 
 """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
 """""" """""" """""" """""" """"" Data Parameters Block """ """""" """""" """""" """"""

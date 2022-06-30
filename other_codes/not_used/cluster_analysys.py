@@ -1,25 +1,11 @@
 from constants import *
-from utilits.clustering_algos_functions import (
-    Birch_cluster_analisys,
-    KMeans_cluster_analisys,
-    MiniBatchKMeans_cluster_analisys,
-    TimeSeriesKMeans_cluster_analisys,
-    AgglomerativeClustering_cluster_analisys,
-    AffinityPropagation_cluster_analisys,
-    OPTICS_cluster_analisys,
-    SpectralClustering_cluster_analisys,
-    GaussianMixture_cluster_analisys,
-    MeanShift_cluster_analisys,
-)
+from utilits.clustering_algos_functions import SpectralClustering_cluster_analisys
 
 # from utilits.data_load import data_load_OHLC
 from other_codes.old_project.old_utilits.triplet_func_for_train import (
     get_patterns_with_profit,
 )
-import pandas as pd
-from IPython.display import display
-from utilits.data_load import test_data_load
-import numpy as np
+from other_codes.not_used.data_load import test_data_load
 
 """ Основные параметры """
 profit_value = 0.0015

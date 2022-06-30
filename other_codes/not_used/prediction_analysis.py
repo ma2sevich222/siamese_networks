@@ -1,7 +1,6 @@
 import pandas as pd
-import numpy as np
 from constants import *
-from utilits.data_load import test_data_load
+from other_codes.not_used.data_load import test_data_load
 from other_codes.old_project.old_utilits.triplet_func_for_train import (
     clusterted_patterns_load,
 )

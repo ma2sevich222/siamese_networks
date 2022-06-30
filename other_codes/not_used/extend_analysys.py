@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from constants import *
 import plotly.express as px
-from utilits.data_load import data_load_OHLC
+from other_codes.not_used.data_load import data_load_OHLC
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 

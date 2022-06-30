@@ -15,29 +15,23 @@ import random
 from sklearn.preprocessing import StandardScaler
 from torch.nn import functional as F
 from torch.utils.data import TensorDataset, DataLoader
-from tqdm import trange, tqdm
 from models.torch_models import shotSiameseNetwork
-from utilits.data_load import data_load_OHLCV, data_load_CL
 from utilits.project_functions import (
     get_train_data,
     get_triplet_random,
     train_triplet_net,
-    get_CLtrain_data,
-    get_stat_after_forward,
     find_best_dist_stbl,
     get_signals,
-    fliped_get_signals,
-    fliped_find_best_dist_stbl,
     uptune_get_stat_after_forward,
 )
 
 today = date.today()  # текущая дата
-n_trials = 300  # сколько эпох
+n_trials = 1  # сколько эпох
 date_xprmnt = today.strftime("%d_%m_%Y")
 source = "source_root"
 out_root = "outputs"
 source_file_name = "GC_2020_2022_60min.csv"  # наши данные
-out_data_root = f"{source_file_name[:-4]}_data_optune_{date_xprmnt}_epoch_{n_trials}"
+out_data_root = f"V1_{source_file_name[:-4]}_data_optune_{date_xprmnt}_epoch_{n_trials}"
 os.mkdir(f"{out_root}/{out_data_root}")  # выходные данные
 intermedia = pd.DataFrame()
 intermedia.to_excel(
@@ -148,7 +142,11 @@ def objective(trial):
         eval_normlzd = np.array(eval_normlzd).reshape(
             -1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1,
         )
-
+        sampled_test_dates = [
+            test_dates[i - pattern_size : i]
+            for i in range(len(test_dates))
+            if i - pattern_size >= 0
+        ]
         """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
         """""" """""" """""" """""" """"" Test model  """ """""" """""" """""" """"""
 
@@ -180,7 +178,7 @@ def objective(trial):
                 net_pred = distance_function(output1, output3)
                 buy_pred.append(float(net_pred.to("cpu").numpy()))
 
-                date.append(test_dates.Datetime[indexI + (pattern_size - 1)])
+                date.append(sampled_test_dates[indexI]["Datetime"].iat[-1])
                 open.append(float(eval_samples[indexI][-1, [0]]))
                 high.append(float(eval_samples[indexI][-1, [1]]))
                 low.append(float(eval_samples[indexI][-1, [2]]))
@@ -219,7 +217,11 @@ def objective(trial):
         eval_normlzd = np.array(eval_normlzd).reshape(
             -1, eval_samples[0].shape[0], eval_samples[0][0].shape[0], 1,
         )
-
+        sampled_forward_dates = [
+            forward_dates[i - pattern_size : i]
+            for i in range(len(forward_dates))
+            if i - pattern_size >= 0
+        ]
         """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
         """""" """""" """""" """""" """"" Forward model  """ """""" """""" """""" """"""
 
@@ -251,7 +253,7 @@ def objective(trial):
                 net_pred = distance_function(output1, output3)
                 buy_pred.append(float(net_pred.to("cpu").numpy()))
 
-                date.append(forward_dates.Datetime[indexI + (pattern_size - 1)])
+                date.append(sampled_forward_dates[indexI]["Datetime"].iat[-1])
                 open.append(float(eval_samples[indexI][-1, [0]]))
                 high.append(float(eval_samples[indexI][-1, [1]]))
                 low.append(float(eval_samples[indexI][-1, [2]]))

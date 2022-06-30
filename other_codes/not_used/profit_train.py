@@ -1,27 +1,22 @@
 import random
-from collections import Counter
-from sklearn.decomposition import PCA
 import numpy as np
 import pandas as pd
 import torch
 import torchvision.models as models
-from torch.nn import functional as F, PairwiseDistance
+from torch.nn import functional as F
 from torch.utils.data import TensorDataset, DataLoader
 from tqdm import tqdm
-from sklearn.mixture import GaussianMixture
 from models.torch_models import SiameseNetwork
-from utilits.data_load import test_data_load
+from other_codes.not_used.data_load import test_data_load
 from other_codes.old_project.old_utilits.triplet_func_for_train import (
     get_triplet_random,
     test_get_patterns_and_other_classes_with_profit,
-    l_infinity,
 )
 from other_codes.old_project.old_utilits.triplet_func_for_train import (
     train_triplet_net,
     clusterized_pattern_save,
 )
 from sklearn.preprocessing import StandardScaler
-import optuna
 
 print(torch.__version__)
 # """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
