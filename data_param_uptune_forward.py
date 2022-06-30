@@ -31,18 +31,18 @@ from utilits.project_functions import (
     uptune_get_stat_after_forward,
 )
 
-today = date.today()
-n_trials = 300
+today = date.today()  # текущая дата
+n_trials = 300  # сколько эпох
 date_xprmnt = today.strftime("%d_%m_%Y")
 source = "source_root"
 out_root = "outputs"
-source_file_name = "GC_2020_2022_60min.csv"
+source_file_name = "GC_2020_2022_60min.csv"  # наши данные
 out_data_root = f"{source_file_name[:-4]}_data_optune_{date_xprmnt}_epoch_{n_trials}"
-os.mkdir(f"{out_root}/{out_data_root}")
+os.mkdir(f"{out_root}/{out_data_root}")  # выходные данные
 intermedia = pd.DataFrame()
 intermedia.to_excel(
     f"{out_root}/{out_data_root}/intermedia_{source_file_name[:-4]}.xlsx"
-)
+)  # промежуточный файл
 
 
 def objective(trial):
@@ -57,10 +57,9 @@ def objective(trial):
     start_forward_time = "2021-03-25 00:00:00"
     df = pd.read_csv(f"{source}/{source_file_name}")
     forward_index = df[df["Datetime"] == start_forward_time].index[0]
-    step = 0.1
+    step = 0.1  # для подбора дистанций.
     profit_value = 0.003
-    get_trade_info = True
-    distance_function = lambda x, y: 1.0 - F.cosine_similarity(x, y)
+    get_trade_info = True  # сохраняем статистику
 
     """""" """""" """""" """""" """"" Параметры сети """ """""" """""" """""" """"""
     epochs = 12  # количество эпох
@@ -89,13 +88,15 @@ def objective(trial):
     )
     for n in range(n_iters):
 
-        train_df = df_for_split[:train_window]
-        test_df = df_for_split[train_window : sum([train_window, select_dist_window])]
+        train_df = df_for_split[:train_window]  # отбираем паттерны
+        test_df = df_for_split[
+            train_window : sum([train_window, select_dist_window])
+        ]  # подбираем дистанции
         forward_df = df_for_split[
             sum([train_window, select_dist_window]) : sum(
                 [train_window, select_dist_window, int(forward_window)]
             )
-        ]
+        ]  # торгуем
         df_for_split = df_for_split[int(forward_window) :]
         df_for_split = df_for_split.reset_index(drop=True)
         train_df = train_df.reset_index(drop=True)
@@ -291,7 +292,7 @@ def objective(trial):
         trial.number,
         get_trade_info=get_trade_info,
     )
-
+    """ сохраняем промежуточные данные"""
     net_profit = df_stata["Net Profit [$]"].values[0]
     Sharpe_Ratio = df_stata["Sharpe Ratio"].values[0]
     trades = df_stata["# Trades"].values[0]
