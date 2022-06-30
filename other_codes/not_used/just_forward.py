@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import torch
+from datetime import date
 import os
 import random
 from sklearn.preprocessing import StandardScaler
@@ -28,6 +29,9 @@ np.random.seed(2020)
 random.seed(2020)
 torch.backends.cudnn.deterministic = True
 """""" """""" """""" """""" """"" Parameters Block """ """""" """""" """""" """"""
+
+today = date.today()
+date_xprmnt = today.strftime("%d_%m_%Y")
 source = "source_root"
 out_root = "outputs"
 source_file_name = "GC_2020_2022_30min.csv"
@@ -47,12 +51,12 @@ select_dist_window = 0
 epochs = 20  # количество эпох
 lr = 0.000009470240447408595  # learnig rate
 embedding_dim = 160  # размер скрытого пространства
-margin = 20  # маржа для лосс функции
+margin = 1  # маржа для лосс функции
 batch_size = 20  # размер батчсайз
 distance_function = lambda x, y: 1.0 - F.cosine_similarity(x, y)
 final_stats_list = []
 
-out_data_root = f"{source_file_name[:-4]}_select_and_forward"
+out_data_root = f"V2_{source_file_name[:-4]}_{date_xprmnt}_forward"
 os.mkdir(f"{out_root}/{out_data_root}")
 
 df = pd.read_csv(f"{source}/{source_file_name}")
@@ -67,11 +71,9 @@ for train_window in tqdm(train_window_list):
             for extr_window in extr_window_list:
                 for overlap in overlap_list:
 
-                    df_for_split = df[(df.index >= forward_index - train_window)].copy()
+                    df_for_split = df[(df.index >= forward_index - train_window)]
                     df_for_split = df_for_split.reset_index(drop=True)
-                    n_iters = (
-                        len(df_for_split) - sum([train_window, forward_window])
-                    ) // forward_window
+                    n_iters = (len(df_for_split) - train_window) // forward_window
 
                     if n_iters < 1:
                         n_iters = 1
@@ -129,10 +131,10 @@ for train_window in tqdm(train_window_list):
                         """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
                         """""" """""" """""" """""" """"" Train net  """ """""" """""" """""" """"""
 
-                        net = simpleSiameseNetwork(embedding_dim=embedding_dim).cuda()
+                        net = shotSiameseNetwork(embedding_dim=embedding_dim).cuda()
                         torch.cuda.empty_cache()
                         train_triplet_net(
-                            lr, epochs, my_dataloader, net, distance_function
+                            lr, epochs, my_dataloader, net, distance_function, margin
                         )
 
                         """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
@@ -151,7 +153,11 @@ for train_window in tqdm(train_window_list):
                             eval_samples[0][0].shape[0],
                             1,
                         )
-
+                        sampled_forward_dates = [
+                            forward_dates[i - pattern_size : i]
+                            for i in range(len(forward_dates))
+                            if i - pattern_size >= 0
+                        ]
                         """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
                         """""" """""" """""" """""" """"" Forward model  """ """""" """""" """""" """"""
 
@@ -202,20 +208,6 @@ for train_window in tqdm(train_window_list):
                                     buy_anchor.cuda().permute(0, 3, 1, 2),
                                 )
 
-                                """sell_anchor = train_x[1][0].reshape(
-                                    1,
-                                    eval_samples[0].shape[0],
-                                    eval_samples[0][0].shape[0],
-                                    1,
-                                )
-
-                                sell_anchor = torch.Tensor(sell_anchor)
-
-                                output1, output2, output3 = net(
-                                    sell_anchor.cuda().permute(0, 3, 1, 2),
-                                    eval_arr_r.cuda().permute(0, 3, 1, 2),
-                                    eval_arr_r.cuda().permute(0, 3, 1, 2),
-                                )"""
                                 sell_pred = distance_function(output1, output2)
                                 sell_pred = float(sell_pred.to("cpu").numpy())
 
@@ -225,7 +217,7 @@ for train_window in tqdm(train_window_list):
                                     Signal.append(-1)
 
                                 date.append(
-                                    forward_dates.Datetime[indexI + (pattern_size - 1)]
+                                    sampled_forward_dates[indexI]["Datetime"].iat[-1]
                                 )
                                 open.append(float(eval_samples[indexI][-1, [0]]))
                                 high.append(float(eval_samples[indexI][-1, [1]]))
