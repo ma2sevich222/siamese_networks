@@ -63,19 +63,13 @@ def objective(trial):
     select_dist_window = 1500
     forward_window = 154
 
-    """epochs = 12  # количество эпох
-    lr = 0.000009470240447408595  # learnig rate
-    embedding_dim = 160  # размер скрытого пространства
-    margin = 1  # маржа для лосс функции
-    batch_size = 150  # размер батчсайз #150"""
-
     """""" """""" """""" """""" """"" Параметры для оптимизации   """ """ """ """ """ """ """ """ """ ""
 
     epochs = trial.suggest_int("epochs", 2, 8, step=2)
     batch_size = trial.suggest_int("batch_size", 50, 150, step=50)
     embedding_dim = trial.suggest_int("embedding_dim", 50, 200, step=50)
     lr = trial.suggest_loguniform("lr", 1e-6, 1e-3)
-    margin = trial.suggest_discrete_uniform("margin", 1.0, 10.0, 1.0)
+    margin = trial.suggest_float("margin", 1.0, 3.0, step=0.1)
 
     df_for_split = df[forward_index - train_window - select_dist_window :]
     df_for_split = df_for_split.reset_index(drop=True)

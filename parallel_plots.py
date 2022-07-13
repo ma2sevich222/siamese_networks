@@ -7,8 +7,8 @@
 import pandas as pd
 import plotly.express as px
 
-"""file_root = "outputs/CL_2020_2022_CL_data_optune_18_06_2022_epoch_500"
-filename = "intermedia_CL_2020_2022.xlsx"
+"""file_root = "outputs"
+filename = "V_1_hyp_par_sel_CL_2020_2022.xlsx"
 final_df = pd.read_excel(f"{file_root}/{filename}")  # загружаем результаты  анализа
 
 df_plot = final_df[
@@ -48,8 +48,8 @@ fig.write_html(f"hyp_parameters_sel_{filename[:-4]}.htm")  # сохраняем 
 fig.show()"""
 
 
-file_root = "outputs/V2_CL_2020_2022_CL_data_optune_24_06_2022_epoch_100"
-filename = "intermedia_CL_2020_2022.xlsx"
+file_root = "outputs"
+filename = "V_2_hyp_par_sel_CL_2020_2022.xlsx"
 final_df = pd.read_excel(f"{file_root}/{filename}")  # загружаем результаты  анализа
 
 df_plot = final_df[
@@ -61,7 +61,6 @@ df_plot = final_df[
         "extr_window",
         "overlap",
         "train_window",
-        "select_dist_window",
         "forward_window",
     ]
 ]
@@ -77,15 +76,12 @@ fig = px.parallel_coordinates(
         "extr_window": "extr_window (bars)",
         "overlap": "overlap (bars)",
         "train_window": "train_window (bars)",
-        "select_dist_window": "select_distance_window (bars)",
         "forward_window": "forward_window (bars)",
     },
     range_color=[df_plot["values_0"].min(), df_plot["values_0"].max()],
     color_continuous_scale=px.colors.sequential.Viridis,
-    title=f"V2_hyp_parameters_select_{filename[:-4]}_100_epochs",
+    title=f"{filename[:-4]}_100_epochs",
 )
 
-fig.write_html(
-    f"V2_hyp_parameters_select_{filename[:-4]}_100_epochs.htm"
-)  # сохраняем в файл
+fig.write_html(f"{filename[:-4]}_100_epochs.htm")  # сохраняем в файл
 fig.show()

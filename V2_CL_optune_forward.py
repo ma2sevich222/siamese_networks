@@ -64,17 +64,15 @@ def objective(trial):
 
     """""" """""" """""" """""" """"" Параметры для оптимизации   """ """ """ """ """ """ """ """ """ ""
 
-    extr_window = trial.suggest_int("extr_window", 10, 500)
-    pattern_size = trial.suggest_int("pattern_size", 10, 700)
-    overlap = trial.suggest_int("overlap", 0, 50)
-    train_window = trial.suggest_categorical(
-        "train_window", ["10000", "40000", "120000", "240000"]
-    )
+    extr_window = trial.suggest_int("extr_window", 50, 400)
+    pattern_size = trial.suggest_int("pattern_size", 90, 300)
+    overlap = trial.suggest_int("overlap", 0, 45)
+    train_window = trial.suggest_categorical("train_window", ["40000", "120000"])
     select_dist_window = trial.suggest_categorical(
         "select_dist_window", ["10000", "40000", "120000"]
     )
     forward_window = trial.suggest_categorical(
-        "forward_window", ["2000", "10000", "40000", "240000"]
+        "forward_window", ["2000", "10000", "40000"]
     )
 
     df_for_split = df[(df.index >= forward_index - int(train_window))]

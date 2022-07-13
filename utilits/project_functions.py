@@ -1,3 +1,4 @@
+import random
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -104,6 +105,10 @@ def get_triplet_random(batch_size, nb_classes, data):
     Returns:
     triplets -- list containing 3 tensors A,P,N of shape (batch_size,w,h,c)
     """
+    os.environ["PYTHONHASHSEED"] = str(2020)
+    random.seed(2020)
+    np.random.seed(2020)
+    torch.manual_seed(2020)
 
     X = data
 
@@ -223,54 +228,13 @@ def get_CLtrain_data(
     max_indexes = argrelmax(np.array(close_price), order=EXTR_WINDOW)[0]
     max_indexes = [i for i in max_indexes if i + EXTR_WINDOW <= len(data_df)]
 
-    '''prices = []
-    steps = [step for step in range(1, EXTR_WINDOW + 1)]
-    for i in min_indexes:
-        step_prices_for_ecach_idex = []
-        for step in steps:
-            growth_price = (close_price[(i + step)] - close_price[i]) / close_price[i]
-            step_prices_for_ecach_idex.append(growth_price)
-        prices.append(step_prices_for_ecach_idex)
-    squares_df = pd.DataFrame()
-    for colname, vlue_col in zip(min_indexes, prices):
-        squares_df[f"{str(colname)}"] = vlue_col
-    axey = squares_df.mean(axis=1).values.tolist()
-
-    conf_intervals = []
-
-    for r in range(len(squares_df)):
-        values_arr = squares_df.iloc[r, :].to_numpy()
-        std_ = np.std(values_arr) / 2
-        conf_intervals.append(std_)
-
-    """fig = go.Figure()
-
-    fig = px.bar(x=[f' Бар : {i} ' for i in steps], y=axey, error_y=conf_intervals)
-    fig.update_layout(
-        title=dict(
-            text=f" Прирост цены в  взависимости от удаления от паттерна с доверительными интервалами для 95% данных. Параметры : profit_value = {profit_value}, EXTR_WINDOW = {EXTR_WINDOW}, PATTERN_SIZE,OVERLAP = {OVERLAP} ",
-            font=dict(size=15)),
-        xaxis_title="Бары",
-        yaxis_title="Величина прироста в долях")
-    fig.show()"""
-
-    indexes_with_profit = []
-    for i in min_indexes:
-        if i + (EXTR_WINDOW) <= len(close_price):
-
-            if (
-                close_price[int(i) : int(i + (EXTR_WINDOW))][-1] - close_price[i]
-                >= close_price[i] * profit_value
-            ):
-                indexes_with_profit.append(i)
-
     indexes_lost_profit = []
     for i in max_indexes:
         if i + (EXTR_WINDOW) <= len(close_price):
             if close_price[int(i) : int(i + (EXTR_WINDOW))][-1] - close_price[i] <= -(
                 close_price[i] * profit_value
             ):
-                indexes_lost_profit.append(i)'''
+                indexes_lost_profit.append(i)
 
     CL_patterns = []
     for ind in min_indexes:
@@ -1090,14 +1054,15 @@ def uptune_get_stat_after_forward(
     df_stats["profit_value"] = profit_value
     df_stats["overlap"] = OVERLAP
     if get_trade_info == True and df_stats["Net Profit [$]"].values > 0:
-        """bt.plot(
+        bt.plot(
             plot_volume=True,
             relative_equity=False,
             filename=f"{out_root}/{out_data_root}/{trial_namber}_bt_plot_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.html",
-        )"""
+        )
         stats.to_csv(
             f"{out_root}/{out_data_root}/{trial_namber}_stats_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.txt"
         )
+        result_df["Signal"] = result_df["Signal"].astype(int)
         result_df.to_csv(
             f"{out_root}/{out_data_root}/{trial_namber}_signals_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.csv"
         )

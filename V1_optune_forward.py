@@ -30,7 +30,7 @@ n_trials = 1  # сколько эпох
 date_xprmnt = today.strftime("%d_%m_%Y")
 source = "source_root"
 out_root = "outputs"
-source_file_name = "GC_2020_2022_60min.csv"  # наши данные
+source_file_name = "GC_2020_2022_30min.csv"  # наши данные
 out_data_root = f"V1_{source_file_name[:-4]}_data_optune_{date_xprmnt}_epoch_{n_trials}"
 os.mkdir(f"{out_root}/{out_data_root}")  # выходные данные
 intermedia = pd.DataFrame()
@@ -68,10 +68,14 @@ def objective(trial):
     extr_window = trial.suggest_int("extr_window", 60, 150)
     pattern_size = trial.suggest_int("pattern_size", 10, 60)
     overlap = trial.suggest_int("overlap", 0, 20)
-    train_window = trial.suggest_int("train_window", 1500, 2500, step=1000)
-    select_dist_window = trial.suggest_int("select_dist_window", 1500, 2500, step=1000)
+    train_window = trial.suggest_categorical(
+        "train_window", ["2500", "3000", "4000", "5000"]
+    )
+    select_dist_window = trial.suggest_categorical(
+        "select_dist_window", ["2500", "3000", "4000", "5000"]
+    )
     forward_window = trial.suggest_categorical(
-        "forward_window", ["66", "88", "110", "132", "154"]
+        "forward_window", ["1347", "2695", "5235", "9832"]
     )
 
     df_for_split = df[forward_index - train_window - select_dist_window :]

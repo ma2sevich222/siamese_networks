@@ -4,6 +4,7 @@
 # Contacts: <ma2sevich222@gmail.com>
 # File: V2_optune_forward.py
 #######################################################
+import warnings
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -23,12 +24,20 @@ from utilits.project_functions import (
     uptune_get_stat_after_forward,
 )
 
+warnings.simplefilter(action="ignore", category=(FutureWarning, UserWarning))
+os.environ["PYTHONHASHSEED"] = str(2020)
+random.seed(2020)
+np.random.seed(2020)
+torch.manual_seed(2020)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+
 today = date.today()
-n_trials = 1
+n_trials = 100
 date_xprmnt = today.strftime("%d_%m_%Y")
 source = "source_root"
 out_root = "outputs"
-source_file_name = "GC_2020_2022_60min.csv"
+source_file_name = "GC_2020_2022_5min.csv"
 out_data_root = f"V2_{source_file_name[:-4]}_data_optune_{date_xprmnt}_epoch_{n_trials}"
 os.mkdir(f"{out_root}/{out_data_root}")
 intermedia = pd.DataFrame()
@@ -63,16 +72,22 @@ def objective(trial):
 
     """""" """""" """""" """""" """"" Параметры для оптимизации   """ """ """ """ """ """ """ """ """ ""
 
-    extr_window = trial.suggest_int("extr_window", 60, 150, step=30)
-    pattern_size = trial.suggest_int("pattern_size", 10, 60, step=10)
-    overlap = trial.suggest_int("overlap", 0, 20, step=10)
-    train_window = trial.suggest_int("train_window", 1500, 2500, step=1000)
-    select_dist_window = trial.suggest_int("select_dist_window", 1500, 2500, step=1000)
-    forward_window = trial.suggest_categorical("forward_window", ["154", "616", "3960"])
+    extr_window = trial.suggest_int("extr_window", 60, 300, step=20)
+    pattern_size = trial.suggest_int("pattern_size", 40, 250, step=10)
+    overlap = trial.suggest_int("overlap", 10, 20, step=5)
+    train_window = trial.suggest_categorical(
+        "train_window", ["5000", "10000", "20000", "40000"]
+    )
+    select_dist_window = trial.suggest_categorical(
+        "select_dist_window", ["5000", "10000", "20000", "40000"]
+    )
+    forward_window = trial.suggest_categorical(
+        "forward_window", ["1440", "5760", "34560", "70000"]
+    )
 
-    df_for_split = df[(df.index >= forward_index - train_window)]
+    df_for_split = df[(df.index >= forward_index - int(train_window))]
     df_for_split = df_for_split.reset_index(drop=True)
-    n_iters = (len(df_for_split) - train_window) // int(forward_window)
+    n_iters = (len(df_for_split) - int(train_window)) // int(forward_window)
 
     if n_iters < 1:
         n_iters = 1
@@ -80,10 +95,10 @@ def objective(trial):
     signals = []
     for n in range(n_iters):
 
-        train_df = df_for_split[:train_window]
+        train_df = df_for_split[: int(train_window)]
 
         forward_df = df_for_split[
-            train_window : sum([train_window, int(forward_window)])
+            int(train_window) : sum([int(train_window), int(forward_window)])
         ]
         df_for_split = df_for_split[int(forward_window) :]
         df_for_split = df_for_split.reset_index(drop=True)
@@ -148,7 +163,7 @@ def objective(trial):
         close = []
         volume = []
         Signal = []
-        train_data_shape = []
+        # train_data_shape = []
 
         net.eval()
         with torch.no_grad():
@@ -183,9 +198,9 @@ def objective(trial):
                 sell_pred = float(sell_pred.to("cpu").numpy())
 
                 if buy_pred < sell_pred:
-                    Signal.append(1)
+                    Signal.append(int(1))
                 if buy_pred > sell_pred:
-                    Signal.append(-1)
+                    Signal.append(int(-1))
 
                 date.append(sampled_forward_dates[indexI]["Datetime"].iat[-1])
                 open.append(float(eval_samples[indexI][-1, [0]]))
@@ -193,7 +208,7 @@ def objective(trial):
                 low.append(float(eval_samples[indexI][-1, [2]]))
                 close.append(float(eval_samples[indexI][-1, [3]]))
                 volume.append(float(eval_samples[indexI][-1, [4]]))
-                train_data_shape.append(float(train_df.shape[0]))
+                # train_data_shape.append(float(train_df.shape[0]))
 
         forward_result = pd.DataFrame(
             {
@@ -204,7 +219,6 @@ def objective(trial):
                 "Close": close,
                 "Volume": volume,
                 "Signal": Signal,
-                "Train_shape": train_data_shape,
             }
         )
 
@@ -250,7 +264,8 @@ def objective(trial):
     return net_profit, Sharpe_Ratio
 
 
-study = optuna.create_study(directions=["maximize", "maximize"])
+sampler = optuna.samplers.TPESampler(seed=2020)
+study = optuna.create_study(directions=["maximize", "maximize"], sampler=sampler)
 study.optimize(objective, n_trials=n_trials)
 
 
@@ -259,6 +274,7 @@ tune_results = study.trials_dataframe()
 tune_results["params_forward_window"] = tune_results["params_forward_window"].astype(
     int
 )
+tune_results["params_train_window"] = tune_results["params_train_window"].astype(int)
 df_plot = tune_results[
     [
         "values_0",
@@ -268,7 +284,6 @@ df_plot = tune_results[
         "params_extr_window",
         "params_overlap",
         "params_train_window",
-        "params_select_dist_window",
         "params_forward_window",
     ]
 ]
@@ -284,12 +299,11 @@ fig = px.parallel_coordinates(
         "params_extr_window": "extr_window (bars)",
         "params_overlap": "overlap (bars)",
         "params_train_window": "train_window (bars)",
-        "params_select_dist_window": "select_dist_window (bars)",
         "params_forward_window": "forward_window (bars)",
     },
     range_color=[df_plot["values_0"].min(), df_plot["values_0"].max()],
     color_continuous_scale=px.colors.sequential.Viridis,
-    title=f"hyp_parameters_select_{source_file_name[:-4]}_optune_epoch_{n_trials}",
+    title=f"V2_hyp_parameters_select_{source_file_name[:-4]}_optune_epoch_{n_trials}",
 )
 
 fig.write_html(f"{out_root}/{out_data_root}/hyp_par_sel_{source_file_name[:-4]}.htm")
