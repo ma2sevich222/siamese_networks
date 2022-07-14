@@ -321,7 +321,8 @@ def objective(trial):
     return net_profit, Sharpe_Ratio
 
 
-study = optuna.create_study(directions=["maximize", "maximize"])
+sampler = optuna.samplers.TPESampler(seed=2020)
+study = optuna.create_study(directions=["maximize", "maximize"], sampler=sampler)
 study.optimize(objective, n_trials=n_trials)
 
 

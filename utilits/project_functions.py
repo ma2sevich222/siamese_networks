@@ -25,9 +25,17 @@ def get_train_data(
     close_price = data_df["Close"].values.tolist()
 
     min_indexes = argrelmin(np.array(close_price), order=EXTR_WINDOW)[0]
-    min_indexes = [i for i in min_indexes if i + EXTR_WINDOW <= len(data_df)]
+    min_indexes = [
+        i
+        for i in min_indexes
+        if (i + EXTR_WINDOW <= len(data_df) - 1) and (i + OVERLAP <= len(data_df) - 1)
+    ]
     max_indexes = argrelmax(np.array(close_price), order=EXTR_WINDOW)[0]
-    max_indexes = [i for i in max_indexes if i + EXTR_WINDOW <= len(data_df)]
+    max_indexes = [
+        i
+        for i in max_indexes
+        if (i + EXTR_WINDOW <= len(data_df) - 1) and (i + OVERLAP <= len(data_df) - 1)
+    ]
 
     indexes_with_profit = []
     for i in min_indexes:
@@ -221,23 +229,91 @@ def get_CLtrain_data(
     data_df, profit_value, EXTR_WINDOW, PATTERN_SIZE, OVERLAP, train_dates,
 ):
     close_price = data_df["Close"].values.tolist()
-    train_dates = train_dates.Datetime.values
-
     min_indexes = argrelmin(np.array(close_price), order=EXTR_WINDOW)[0]
-    min_indexes = [i for i in min_indexes if i + EXTR_WINDOW <= len(data_df)]
+    min_indexes = [
+        i
+        for i in min_indexes
+        if (
+            i + EXTR_WINDOW <= len(close_price) - 1
+            and i - PATTERN_SIZE >= 0
+            and i + OVERLAP <= len(close_price) - 1
+        )
+    ]
     max_indexes = argrelmax(np.array(close_price), order=EXTR_WINDOW)[0]
-    max_indexes = [i for i in max_indexes if i + EXTR_WINDOW <= len(data_df)]
+    max_indexes = [
+        i
+        for i in max_indexes
+        if (
+            i + EXTR_WINDOW <= len(close_price) - 1
+            and i - PATTERN_SIZE >= 0
+            and i + OVERLAP <= len(close_price) - 1
+        )
+    ]
+    if len(min_indexes) < 10:
+        while len(min_indexes) < 15:
+            print("min_extr", EXTR_WINDOW)
+            min_indexes = argrelmin(np.array(close_price), order=EXTR_WINDOW)[0]
+            min_indexes = [
+                i
+                for i in min_indexes
+                if (
+                    i + EXTR_WINDOW <= len(close_price) - 1
+                    and i - PATTERN_SIZE >= 0
+                    and i + OVERLAP <= len(close_price) - 1
+                )
+            ]
+            EXTR_WINDOW -= 3
+    if len(max_indexes) < 10:
+        while len(max_indexes) < 10:
+            print("man_extr", EXTR_WINDOW)
+            max_indexes = argrelmax(np.array(close_price), order=EXTR_WINDOW)[0]
+            max_indexes = [
+                i
+                for i in max_indexes
+                if (
+                    i + EXTR_WINDOW <= len(close_price) - 1
+                    and i - PATTERN_SIZE >= 0
+                    and i + OVERLAP <= len(close_price) - 1
+                )
+            ]
+            EXTR_WINDOW -= 3
+    index_with_prof = [
+        i
+        for i in min_indexes
+        if close_price[i : i + EXTR_WINDOW][-1] - close_price[i : i + EXTR_WINDOW][0]
+        >= close_price[i : i + EXTR_WINDOW][0] * profit_value
+    ]
+    index_lost_prof = [
+        i
+        for i in max_indexes
+        if close_price[i : i + EXTR_WINDOW][-1] - close_price[i : i + EXTR_WINDOW][0]
+        <= -(close_price[i : i + EXTR_WINDOW][0] * profit_value)
+    ]
+    if len(index_with_prof) < 10:
+        while len(index_with_prof) < 10:
+            profit_value -= 0.001
 
-    indexes_lost_profit = []
-    for i in max_indexes:
-        if i + (EXTR_WINDOW) <= len(close_price):
-            if close_price[int(i) : int(i + (EXTR_WINDOW))][-1] - close_price[i] <= -(
-                close_price[i] * profit_value
-            ):
-                indexes_lost_profit.append(i)
+            index_with_prof = [
+                i
+                for i in min_indexes
+                if close_price[i : i + EXTR_WINDOW][-1]
+                - close_price[i : i + EXTR_WINDOW][0]
+                >= close_price[i : i + EXTR_WINDOW][0] * profit_value
+            ]
+    if len(index_lost_prof) < 10:
+        while len(index_lost_prof) < 10:
+            profit_value -= 0.001
+
+            index_lost_prof = [
+                i
+                for i in max_indexes
+                if close_price[i : i + EXTR_WINDOW][-1]
+                - close_price[i : i + EXTR_WINDOW][0]
+                <= -(close_price[i : i + EXTR_WINDOW][0] * profit_value)
+            ]
 
     CL_patterns = []
-    for ind in min_indexes:
+    for ind in index_with_prof:
         if ind - PATTERN_SIZE >= 0:
 
             CL_patt = data_df[
@@ -253,7 +329,7 @@ def get_CLtrain_data(
             CL_patterns.append(CL_patt)
 
     CL_sell_patterns = []
-    for ind in max_indexes:
+    for ind in index_lost_prof:
         if ind - PATTERN_SIZE >= 0:
 
             CL_sell_patt = data_df[
@@ -280,27 +356,6 @@ def get_CLtrain_data(
     # n_samples_to_train = n_samples_to_train // 2
 
     print(f"Количество уникальных триплетов = {n_samples_to_train}")
-
-    """fig = go.Figure()  # x=data_df.index.tolist()
-    fig.add_trace(go.Scatter(x=train_dates, y=data_df['Close'], mode='lines', name='CLOSE'))
-    fig.add_trace(go.Scatter(x=train_dates[indexes_with_profit], y=data_df['Close'].iloc[indexes_with_profit],
-                             mode='markers',
-                             marker=dict(symbol='triangle-up', size=15, color='green')))
-    fig.add_trace(go.Scatter(x=train_dates[indexes_lost_profit], y=data_df['Close'].iloc[indexes_lost_profit],
-                             mode='markers',
-                             marker=dict(symbol='triangle-down', size=15, color='red')))
-
-    fig.update_layout(
-        title=f'Разметка данных на основе параметров profit_value = {profit_value}, EXTR_WINDOW = {EXTR_WINDOW}, PATTERN_SIZE = {PATTERN_SIZE}  ',
-        xaxis_title='DATE', yaxis_title='CLOSE', legend_title='Legend')
-    fig.show()"""
-
-    """scaler = StandardScaler()
-    std_patterns = np.array([scaler.fit_transform(i) for i in patterns]).reshape(-1, PATTERN_SIZE,
-                                                                                 len(data_df.columns.to_list()), 1)
-    std_sell_patterns = np.array([scaler.fit_transform(i) for i in sell_patterns]).reshape(-1, PATTERN_SIZE,
-                                                                                   len(data_df.columns.to_list()),
-                                                                                           1)"""
 
     CL_patterns = np.array(CL_patterns).reshape(
         -1,
@@ -1054,16 +1109,21 @@ def uptune_get_stat_after_forward(
     df_stats["profit_value"] = profit_value
     df_stats["overlap"] = OVERLAP
     if get_trade_info == True and df_stats["Net Profit [$]"].values > 0:
-        bt.plot(
+        """bt.plot(
             plot_volume=True,
             relative_equity=False,
             filename=f"{out_root}/{out_data_root}/{trial_namber}_bt_plot_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.html",
-        )
+        )"""
         stats.to_csv(
             f"{out_root}/{out_data_root}/{trial_namber}_stats_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.txt"
         )
         result_df["Signal"] = result_df["Signal"].astype(int)
-        result_df.to_csv(
+        # result_df["Datetime"] = result_df.index
+        result_df.insert(0, "Datetime", result_df.index)
+        result_df = result_df.reset_index(drop=True)
+        result_df[
+            ["Datetime", "Open", "High", "Low", "Close", "Volume", "Signal"]
+        ].to_csv(
             f"{out_root}/{out_data_root}/{trial_namber}_signals_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.csv"
         )
 

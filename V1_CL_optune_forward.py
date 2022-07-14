@@ -51,17 +51,18 @@ def objective(trial):
 
     start_forward_time = "2021-01-04 00:01:25"
     df = pd.read_csv(f"{source}/{source_file_name}")
+
     forward_index = df[df["Datetime"] == start_forward_time].index[0]
     step = 0.1
-    profit_value = 0.003
+    profit_value = 1
     get_trade_info = True
 
     """""" """""" """""" """""" """"" Параметры сети """ """""" """""" """""" """"""
-    epochs = 20  # количество эпох
+    epochs = 50  # количество эпох
     lr = 0.000009470240447408595  # learnig rate
     embedding_dim = 200  # размер скрытого пространства
-    margin = 1.5  # маржа для лосс функции
-    batch_size = 250  # размер батчсайз #150
+    margin = 1  # маржа для лосс функции
+    batch_size = 50  # размер батчсайз #150
     distance_function = lambda x, y: 1.0 - F.cosine_similarity(x, y)
 
     """""" """""" """""" """""" """"" Параметры для оптимизации   """ """ """ """ """ """ """ """ """ ""
@@ -69,11 +70,9 @@ def objective(trial):
     extr_window = trial.suggest_int("extr_window", 250, 500)
     pattern_size = trial.suggest_int("pattern_size", 250, 450)
     overlap = trial.suggest_int("overlap", 0, 30)
-    train_window = trial.suggest_categorical("train_window", ["10000", "20000"])
-    select_dist_window = trial.suggest_categorical(
-        "select_dist_window", ["10000", "40000"]
-    )
-    forward_window = trial.suggest_categorical("forward_window", ["10000", "40000"])
+    train_window = trial.suggest_categorical("train_window", [10000, 20000])
+    select_dist_window = trial.suggest_categorical("select_dist_window", [10000, 40000])
+    forward_window = trial.suggest_categorical("forward_window", [10000, 40000])
 
     df_for_split = df[forward_index - int(train_window) - int(select_dist_window) :]
     df_for_split = df_for_split.reset_index(drop=True)
@@ -87,11 +86,14 @@ def objective(trial):
         test_df = df_for_split[
             int(train_window) : sum([int(train_window), int(select_dist_window)])
         ]
-        forward_df = df_for_split[
-            sum([int(train_window), int(select_dist_window)]) : sum(
-                [int(train_window), int(select_dist_window), int(forward_window)]
-            )
-        ]
+        if n == n_iters - 1:
+            forward_df = df_for_split[sum([train_window, select_dist_window]) :]
+        else:
+            forward_df = df_for_split[
+                sum([train_window, select_dist_window]) : sum(
+                    [train_window, select_dist_window, int(forward_window)]
+                )
+            ]
         df_for_split = df_for_split[int(forward_window) :]
         df_for_split = df_for_split.reset_index(drop=True)
         train_df = train_df.reset_index(drop=True)
@@ -340,7 +342,8 @@ def objective(trial):
     return net_profit, Sharpe_Ratio
 
 
-study = optuna.create_study(directions=["maximize", "maximize"])
+sampler = optuna.samplers.TPESampler(seed=2020)
+study = optuna.create_study(directions=["maximize", "maximize"], sampler=sampler)
 study.optimize(objective, n_trials=n_trials)
 
 
