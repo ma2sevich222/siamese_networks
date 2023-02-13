@@ -10,6 +10,8 @@ from torch.nn import TripletMarginWithDistanceLoss
 import backtesting._plotting as plt_backtesting
 from backtesting import Backtest
 from tqdm import trange
+import torch.nn as nn
+import torchbnn as bnn
 
 # from utilits.strategies_AT import Long_n_Short_Strategy_Float as LnSF
 import os
@@ -1109,11 +1111,11 @@ def uptune_get_stat_after_forward(
     df_stats["profit_value"] = profit_value
     df_stats["overlap"] = OVERLAP
     if get_trade_info == True and df_stats["Net Profit [$]"].values > 0:
-        """bt.plot(
+        bt.plot(
             plot_volume=True,
             relative_equity=False,
             filename=f"{out_root}/{out_data_root}/{trial_namber}_bt_plot_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.html",
-        )"""
+        )
         stats.to_csv(
             f"{out_root}/{out_data_root}/{trial_namber}_stats_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.txt"
         )
@@ -1125,6 +1127,181 @@ def uptune_get_stat_after_forward(
             ["Datetime", "Open", "High", "Low", "Close", "Volume", "Signal"]
         ].to_csv(
             f"{out_root}/{out_data_root}/{trial_namber}_signals_{source_file_name[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.csv"
+        )
+
+    return df_stats
+
+
+def tensor_size_calc(pattern_size, features_num, kernel, strd, conv_chs):
+    layer = nn.Conv2d(1, conv_chs, kernel_size=kernel, stride=strd)
+    input = torch.randn(100, 1, pattern_size, features_num)
+    output = layer(input).detach().numpy()
+
+    after_conv = np.prod(output.shape[1:])
+    return after_conv
+
+
+def bayes_train_triplet_net(lr, epochs, my_dataloader, net, distance_function, margin):
+    optimizer = optim.Adam(net.parameters(), lr)
+    triplet_loss = TripletMarginWithDistanceLoss(
+        distance_function=distance_function, margin=margin
+    )
+    klloss = bnn.BKLLoss(reduction="mean", last_layer_only=False)
+    counter = []
+    loss_history = []
+    iteration_number = 0
+    l = []
+    # Iterate throught the epochs
+    for epoch in range(epochs):
+
+        # Iterate over batches
+        for i, (anchor, positive, negative) in enumerate(my_dataloader, 0):
+
+            # Send the images and labels to CUDA
+            anchor, positive, negative = (
+                anchor.cuda().permute(0, 3, 1, 2),
+                positive.cuda().permute(0, 3, 1, 2),
+                negative.cuda().permute(0, 3, 1, 2),
+            )
+
+            # Zero the gradients
+
+            output1, output2, output3 = net(anchor, positive, negative)
+
+            output = triplet_loss(output1, output2, output3)
+            kl = klloss(net)
+            total_cost = output + 0.01 * kl
+            # Calculate the backpropagation
+            total_cost.backward()
+
+            # Optimize
+            optimizer.step()
+            optimizer.zero_grad()
+            l.append(output.item())
+
+            # Every 10 batches print out the loss
+            if i % 10 == 0:
+                # print(f"\rEpoch number {epoch}\n Current loss {output}\n", end="")
+                iteration_number += 10
+
+                counter.append(iteration_number)
+                out = output.cpu()
+                loss_history.append(out.detach().numpy())
+        last_epoch_loss = torch.tensor(l[-len(my_dataloader) : -1]).mean()
+    show_plot(counter, loss_history)
+    return l, last_epoch_loss
+
+
+def bayes_tune_get_stat_after_forward(
+    result_df,
+    lookback_size,
+    epochs,
+    n_hiden,
+    n_hiden_two,
+    train_window,
+    forward_window,
+    source_file_name,
+    out_root,
+    out_data_root,
+    trial_namber,
+    get_trade_info=False,
+):
+    plt_backtesting._MAX_CANDLES = 100_000
+    pd.pandas.set_option("display.max_columns", None)
+    pd.set_option("expand_frame_repr", False)
+    pd.options.display.expand_frame_repr = False
+    pd.set_option("precision", 2)
+
+    result_df.set_index("Datetime", inplace=True)
+    result_df.index = pd.to_datetime(result_df.index)
+    result_df = result_df.sort_index()
+
+    """print("******* Результы предсказания сети *******")
+    print(result_df)
+    print()"""
+
+    """ Параметры тестирования """
+    i = 0
+    deposit = 100000  # сумма одного контракта GC & CL
+    comm = 4.6  # GC - комиссия для золота
+    # comm = 4.52  # CL - комиссия для нейти
+    # sell_after = 1.6
+    # buy_before = 0.6
+    # step = 0.1  # с каким шагом проводим тест разметки
+    # result_filename = f'{DESTINATION_ROOT}/selection_distances_{FILENAME[:-4]}_step{step}'''
+
+    """ Тестирвоание """
+
+    """out_root = f"{FILENAME[:-4]}_forward_run_begin_{result_df.index[0]}_end_{result_df.index[-1]}_({train_window / 1000}k_{select_dist_window / 1000}k_{forward_window / 1000}k_)"
+    os.mkdir(f"{DESTINATION_ROOT}/{out_root}")"""
+
+    # result_df['Signal'].where(~(result_df.Distance >= sell_after), -1, inplace=True)
+    # result_df['Signal'].where(~(result_df.Distance <= buy_before), 1, inplace=True)
+    df_stats = pd.DataFrame()
+    result_df.loc[result_df["Signal"] == 0, "Signal"] = np.nan  # заменим 0 на nan
+    result_df["Signal"] = result_df[
+        "Signal"
+    ].ffill()  # заменим nan на предыдущие значения
+    result_df.dropna(axis=0, inplace=True)  # Удаляем наниты
+    result_df = result_df.loc[
+        result_df["Signal"] != 0
+    ]  # оставим только не нулевые строки
+    """result_df.to_csv(
+        f"{DESTINATION_ROOT}/{out_root}/forward_signals_{FILENAME[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.csv"
+    )"""
+
+    bt = Backtest(
+        result_df,
+        strategy=LazyStrategy,
+        cash=deposit,
+        commission_type="absolute",
+        commission=4.62,
+        features_coeff=10,
+        exclusive_orders=True,
+    )
+    stats = bt.run()[:27]
+
+    """bt.plot(
+        plot_volume=True,
+        relative_equity=True,
+        filename=f"{DESTINATION_ROOT}/{out_root}/forward_bt_plot_{FILENAME[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.html",
+    )"""
+    """stats.to_csv(
+        f"{DESTINATION_ROOT}/{out_root}/forward_stats_{FILENAME[:-4]}_patern{PATTERN_SIZE}_extrw{EXTR_WINDOW}_overlap{OVERLAP}.txt"
+    )"""
+
+    df_stats = df_stats.append(stats, ignore_index=True)
+    df_stats["Net Profit [$]"] = (
+        df_stats.loc[i, "Equity Final [$]"]
+        - deposit
+        - df_stats.loc[i, "# Trades"] * comm
+    )
+    # df_stats.loc[i, "buy_before"] = buy_before * step
+    # df_stats.loc[i, "sell_after"] = sell_after * step
+    df_stats["train_window"] = train_window
+    df_stats["forward_window"] = forward_window
+    df_stats["lookback_size"] = lookback_size
+    df_stats["epochs"] = epochs
+    df_stats["n_hiden"] = n_hiden
+    df_stats["n_hiden_two"] = n_hiden_two
+    if get_trade_info == True and df_stats["Net Profit [$]"].values > 0:
+        bt.plot(
+            plot_volume=True,
+            relative_equity=False,
+            filename=f"{out_root}/{out_data_root}/{trial_namber}_bt_plot_{source_file_name[:-4]}train_window{train_window}forward_window{forward_window}_lookback_size{lookback_size}.html",
+        )
+        stats.to_csv(
+            f"{out_root}/{out_data_root}/{trial_namber}_stats_{source_file_name[:-4]}_train_window{train_window}forward_window{forward_window}_lookback_size{lookback_size}.txt"
+        )
+        result_df["Signal"] = result_df["Signal"].astype(int)
+        # result_df["Datetime"] = result_df.index
+        result_df.insert(0, "Datetime", result_df.index)
+        result_df = result_df.reset_index(drop=True)
+        result_df[
+            ["Datetime", "Open", "High", "Low", "Close", "Volume", "Signal"]
+        ].to_csv(
+            f"{out_root}/{out_data_root}/{trial_namber}_signals_{source_file_name[:-4]}_train_window{train_window}forward_window{forward_window}_lookback_size{lookback_size}.csv",
+            index=False,
         )
 
     return df_stats

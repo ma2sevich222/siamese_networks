@@ -1,9 +1,4 @@
-#######################################################
-# Copyright © 2021-2099 Ekosphere. All rights reserved
-# Author: Evgeny Matusevich
-# Contacts: <ma2sevich222@gmail.com>
-# V2_CL_optune_forward.py
-#######################################################
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -225,7 +220,7 @@ def objective(trial):
                 }
             )
 
-    signals.append(forward_result)
+            signals.append(forward_result)
 
     signals_combained = pd.concat(signals, ignore_index=True, sort=False)
 

@@ -1,6 +1,7 @@
 
 import numpy as np
 import pandas as pd
+import warnings
 import plotly.express as px
 import torch
 import os
@@ -20,27 +21,29 @@ from utilits.project_functions import (
     uptune_get_stat_after_forward,
 )
 
-today = date.today()  # текущая дата
-n_trials = 1  # сколько эпох
+warnings.simplefilter(action="ignore", category=(FutureWarning, UserWarning))
+os.environ["PYTHONHASHSEED"] = str(2020)
+random.seed(2020)
+np.random.seed(2020)
+torch.manual_seed(2020)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+
+today = date.today()
+n_trials = 300
 date_xprmnt = today.strftime("%d_%m_%Y")
 source = "source_root"
 out_root = "outputs"
-source_file_name = "GC_2020_2022_30min.csv"  # наши данные
+source_file_name = "GC_2020_2022_10min.csv"
 out_data_root = f"V1_{source_file_name[:-4]}_data_optune_{date_xprmnt}_epoch_{n_trials}"
-os.mkdir(f"{out_root}/{out_data_root}")  # выходные данные
+os.mkdir(f"{out_root}/{out_data_root}")
 intermedia = pd.DataFrame()
 intermedia.to_excel(
     f"{out_root}/{out_data_root}/intermedia_{source_file_name[:-4]}.xlsx"
-)  # промежуточный файл
+)
 
 
 def objective(trial):
-
-    torch.manual_seed(2020)
-    torch.cuda.manual_seed(2020)
-    np.random.seed(2020)
-    random.seed(2020)
-    torch.backends.cudnn.deterministic = True
     """""" """""" """""" """""" """"" Общие настройки """ """""" """""" """""" """"""
 
     start_forward_time = "2021-03-25 00:00:00"
@@ -48,30 +51,24 @@ def objective(trial):
     forward_index = df[df["Datetime"] == start_forward_time].index[0]
     step = 0.1  # для подбора дистанций.
     profit_value = 0.003
-    get_trade_info = True  # сохраняем статистику
+    get_trade_info = True
 
     """""" """""" """""" """""" """"" Параметры сети """ """""" """""" """""" """"""
-    epochs = 12  # количество эпох
-    lr = 0.000009470240447408595  # learnig rate
-    embedding_dim = 160  # размер скрытого пространства
-    margin = 1  # маржа для лосс функции
-    batch_size = 150  # размер батчсайз #150
+    epochs = 12
+    lr = 0.000009470240447408595
+    embedding_dim = 160
+    margin = 1
+    batch_size = 150
     distance_function = lambda x, y: 1.0 - F.cosine_similarity(x, y)
 
     """""" """""" """""" """""" """"" Параметры для оптимизации   """ """ """ """ """ """ """ """ """ ""
 
-    extr_window = trial.suggest_int("extr_window", 60, 150)
-    pattern_size = trial.suggest_int("pattern_size", 10, 60)
-    overlap = trial.suggest_int("overlap", 0, 20)
-    train_window = trial.suggest_categorical(
-        "train_window", ["2500", "3000", "4000", "5000"]
-    )
-    select_dist_window = trial.suggest_categorical(
-        "select_dist_window", ["2500", "3000", "4000", "5000"]
-    )
-    forward_window = trial.suggest_categorical(
-        "forward_window", ["1347", "2695", "5235", "9832"]
-    )
+    extr_window = trial.suggest_int("extr_window", 90, 300)
+    pattern_size = trial.suggest_int("pattern_size", 30, 90)
+    overlap = trial.suggest_int("overlap", 0, 15)
+    train_window = trial.suggest_categorical("train_window", [5016, 10032])
+    select_dist_window = trial.suggest_categorical("select_dist_window", [5016, 10032])
+    forward_window = trial.suggest_categorical("forward_window", [3960, 15048, 33000])
 
     df_for_split = df[forward_index - train_window - select_dist_window :]
     df_for_split = df_for_split.reset_index(drop=True)
@@ -79,12 +76,11 @@ def objective(trial):
     n_iters = (len(df_for_split) - train_window - select_dist_window) // int(
         forward_window
     )
-    for n in range(n_iters):
+    for n in range(n_iters):  # n_iters
 
-        train_df = df_for_split[:train_window]  # отбираем паттерны
-        test_df = df_for_split[
-            train_window : sum([train_window, select_dist_window])
-        ]  # подбираем дистанции
+        train_df = df_for_split[:train_window]
+        test_df = df_for_split[train_window : sum([train_window, select_dist_window])]
+
         if n == n_iters - 1:
             forward_df = df_for_split[sum([train_window, select_dist_window]) :]
         else:
@@ -92,7 +88,8 @@ def objective(trial):
                 sum([train_window, select_dist_window]) : sum(
                     [train_window, select_dist_window, int(forward_window)]
                 )
-            ]  # торгуем
+            ]
+
         df_for_split = df_for_split[int(forward_window) :]
         df_for_split = df_for_split.reset_index(drop=True)
         train_df = train_df.reset_index(drop=True)
@@ -109,7 +106,7 @@ def objective(trial):
 
         train_x, n_samples_to_train = get_train_data(
             train_df, profit_value, extr_window, pattern_size, overlap, train_dates,
-        )  # получаем данные для создания триплетов
+        )
 
         n_classes = len(train_x)
         train_triplets = get_triplet_random(n_samples_to_train, n_classes, train_x)
@@ -117,12 +114,12 @@ def objective(trial):
             " Размер данных для обучения:", np.array(train_triplets).shape,
         )
 
-        tensor_A = torch.Tensor(train_triplets[0])  # transform to torch tensor
+        tensor_A = torch.Tensor(train_triplets[0])
         tensor_P = torch.Tensor(train_triplets[1])
         tensor_N = torch.Tensor(train_triplets[2])
 
-        my_dataset = TensorDataset(tensor_A, tensor_P, tensor_N)  # create your datset
-        my_dataloader = DataLoader(my_dataset, batch_size=batch_size)
+        my_dataset = TensorDataset(tensor_A, tensor_P, tensor_N)
+        my_dataloader = DataLoader(my_dataset, batch_size=batch_size, num_workers=0)
 
         """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
         """""" """""" """""" """""" """"" Train net  """ """""" """""" """""" """"""
@@ -315,6 +312,12 @@ def objective(trial):
     )
 
     torch.save(net.state_dict(), f"{out_root}/{out_data_root}/weights.pt")
+    if net_profit > 30000:
+        torch.save(
+            net.state_dict(),
+            f"{out_root}/{out_data_root}/weights_{int(net_profit)}_"
+            f"{pattern_size}_{extr_window}_{overlap}_{forward_window}.pt",
+        )
 
     return net_profit, Sharpe_Ratio
 

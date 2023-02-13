@@ -7,26 +7,30 @@ import os
 import optuna
 from datetime import date
 import random
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 from torch.nn import functional as F
 from torch.utils.data import TensorDataset, DataLoader
-from models.torch_models import shotSiameseNetwork
+from models.bayes_models import bayes_shotSiameseNetwork
 from utilits.project_functions import (
     get_train_data,
     get_triplet_random,
-    train_triplet_net,
+    bayes_train_triplet_net,
     find_best_dist_stbl,
     get_signals,
     uptune_get_stat_after_forward,
+    tensor_size_calc,
 )
 
+scaler = MinMaxScaler()
 today = date.today()  # текущая дата
-n_trials = 1  # сколько эпох
+n_trials = 200  # сколько эпох
 date_xprmnt = today.strftime("%d_%m_%Y")
 source = "source_root"
 out_root = "outputs"
 source_file_name = "GC_2020_2022_30min.csv"  # наши данные
-out_data_root = f"V1_{source_file_name[:-4]}_data_optune_{date_xprmnt}_epoch_{n_trials}"
+out_data_root = (
+    f"bayes_V1_{source_file_name[:-4]}_data_optune_{date_xprmnt}_epoch_{n_trials}"
+)
 os.mkdir(f"{out_root}/{out_data_root}")  # выходные данные
 intermedia = pd.DataFrame()
 intermedia.to_excel(
@@ -49,30 +53,30 @@ def objective(trial):
     step = 0.1  # для подбора дистанций.
     profit_value = 0.003
     get_trade_info = True  # сохраняем статистику
-
+    kernel = 2
+    strd = 1
+    conv_chs = 256
     """""" """""" """""" """""" """"" Параметры сети """ """""" """""" """""" """"""
-    epochs = 12  # количество эпох
+    epochs = 50  # количество эпох
     lr = 0.000009470240447408595  # learnig rate
     embedding_dim = 160  # размер скрытого пространства
     margin = 1  # маржа для лосс функции
-    batch_size = 150  # размер батчсайз #150
+    batch_size = 20  # размер батчсайз #150
     distance_function = lambda x, y: 1.0 - F.cosine_similarity(x, y)
 
     """""" """""" """""" """""" """"" Параметры для оптимизации   """ """ """ """ """ """ """ """ """ ""
 
-    extr_window = trial.suggest_int("extr_window", 60, 150)
+    extr_window = trial.suggest_int("extr_window", 60, 200)
     pattern_size = trial.suggest_int("pattern_size", 10, 60)
     overlap = trial.suggest_int("overlap", 0, 20)
-    train_window = trial.suggest_categorical(
-        "train_window", ["2500", "3000", "4000", "5000"]
-    )
+    train_window = trial.suggest_categorical("train_window", [2500, 3000, 4000, 5000])
     select_dist_window = trial.suggest_categorical(
-        "select_dist_window", ["2500", "3000", "4000", "5000"]
+        "select_dist_window", [2500, 3000, 4000, 5000]
     )
     forward_window = trial.suggest_categorical(
-        "forward_window", ["1347", "2695", "5235", "9832"]
+        "forward_window", [1347, 2695, 5235, 9832]
     )
-
+    conv_out = tensor_size_calc(pattern_size, 5, kernel, strd, conv_chs)
     df_for_split = df[forward_index - train_window - select_dist_window :]
     df_for_split = df_for_split.reset_index(drop=True)
     signals = []
@@ -127,13 +131,15 @@ def objective(trial):
         """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
         """""" """""" """""" """""" """"" Train net  """ """""" """""" """""" """"""
 
-        net = shotSiameseNetwork(embedding_dim=embedding_dim).cuda()
+        net = bayes_shotSiameseNetwork(kernel, strd, conv_chs, conv_out).cuda()
         torch.cuda.empty_cache()
-        train_triplet_net(lr, epochs, my_dataloader, net, distance_function, margin)
+        bayes_train_triplet_net(
+            lr, epochs, my_dataloader, net, distance_function, margin
+        )
 
         """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
         """""" """""" """""" """""" """"" Test data prepare  """ """""" """""" """""" """"""
-        scaler = StandardScaler()
+
         eval_array = test_df.to_numpy()
         eval_samples = [
             eval_array[i - pattern_size : i]
@@ -208,7 +214,7 @@ def objective(trial):
 
         """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" """""" ""
         """""" """""" """""" """""" """"" Forward data prepare  """ """""" """""" """""" """"""
-        scaler = StandardScaler()
+
         eval_array = forward_df.to_numpy()
         eval_samples = [
             eval_array[i - pattern_size : i]
@@ -362,11 +368,13 @@ fig = px.parallel_coordinates(
     },
     range_color=[df_plot["values_0"].min(), df_plot["values_0"].max()],
     color_continuous_scale=px.colors.sequential.Viridis,
-    title=f"hyp_parameters_select_{source_file_name[:-4]}_optune_epoch_{n_trials}",
+    title=f"bayesV1_hyp_parameters_select_{source_file_name[:-4]}_optune_epoch_{n_trials}",
 )
 
-fig.write_html(f"{out_root}/{out_data_root}/hyp_par_sel_{source_file_name[:-4]}.htm")
+fig.write_html(
+    f"{out_root}/{out_data_root}/bayesV1_hyp_par_sel_{source_file_name[:-4]}.htm"
+)
 fig.show()
 tune_results.to_excel(
-    f"{out_root}/{out_data_root}/hyp_par_sel_{source_file_name[:-4]}.xlsx"
+    f"{out_root}/{out_data_root}/bayesV1_hyp_par_sel_{source_file_name[:-4]}.xlsx"
 )

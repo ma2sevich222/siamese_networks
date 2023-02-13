@@ -1,9 +1,4 @@
-#######################################################
-# Copyright © 2021-2099 Ekosphere. All rights reserved
-# Author: Evgeny Matusevich
-# Contacts: <ma2sevich222@gmail.com>
-# File: V2_optune_forward.py
-#######################################################
+
 import warnings
 import numpy as np
 import pandas as pd
@@ -64,10 +59,10 @@ def objective(trial):
 
     """""" """""" """""" """""" """"" Параметры сети """ """""" """""" """""" """"""
     epochs = 12  # количество эпох
-    lr = 0.000009470240447408595  # learnig rate
-    embedding_dim = 160  # размер скрытого пространства
-    margin = 1  # маржа для лосс функции
-    batch_size = 150  # размер батчсайз #150
+    lr = 0.001  # learnig rate
+    embedding_dim = 100  # размер скрытого пространства
+    margin = 1.5  # маржа для лосс функции
+    batch_size = 50  # размер батчсайз #150
     distance_function = lambda x, y: 1.0 - F.cosine_similarity(x, y)
 
     """""" """""" """""" """""" """"" Параметры для оптимизации   """ """ """ """ """ """ """ """ """ ""

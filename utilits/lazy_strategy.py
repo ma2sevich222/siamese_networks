@@ -1,8 +1,4 @@
-##################################################################################
-# Copyright © 2021-2099 Ekosphere. All rights reserved
-# Author: Sergey Chekhovskikh / Andrey Tsyrkunov
-# Contacts: <chekh@doconsult.ru>
-##################################################################################
+
 from backtesting import Strategy
 from loguru import logger
 

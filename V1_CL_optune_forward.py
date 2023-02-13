@@ -1,9 +1,4 @@
-#######################################################
-# Copyright © 2021-2099 Ekosphere. All rights reserved
-# Author: Evgeny Matusevich
-# Contacts: <ma2sevich222@gmail.com>
-# File: V1_CL_optune_forward.py
-#######################################################
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -56,6 +51,17 @@ def objective(trial):
     step = 0.1
     profit_value = 1
     get_trade_info = True
+    df_plot = df[forward_index:]
+    import plotly.express as px
+
+    fig = px.line(
+        df,
+        x="Datetime",
+        y="Close",
+        title="Цена закрытия на участке форвардного анализа",
+    )
+    fig.show()
+    exit()
 
     """""" """""" """""" """""" """"" Параметры сети """ """""" """""" """""" """"""
     epochs = 50  # количество эпох

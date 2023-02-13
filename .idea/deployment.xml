@@ -5,7 +5,7 @@
       <paths name="matusevich@bigserver.ekosphere.ru:22">
         <serverdata>
           <mappings>
-            <mapping deploy="/tmp/pycharm_project_876" local="$PROJECT_DIR$" />
+            <mapping deploy="/siemence" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>
